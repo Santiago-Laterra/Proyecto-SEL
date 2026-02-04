@@ -1,5 +1,4 @@
 import { Document } from 'mongoose';
-
 //Document es una interfaz interna de Mongoose que trae todas las funciones "mágicas" que MongoDB le da a un registro automáticamente.
 
 export interface IUser extends Document {
