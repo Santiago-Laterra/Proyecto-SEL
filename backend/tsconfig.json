@@ -8,7 +8,11 @@
     "strict": true, // Activa las validaciones más importantes
     "noImplicitAny": true, // No permite variables sin tipo
     // "noUnusedLocals": true, // Detecta variables locales sin usar
-    "resolveJsonModule": true // Permite importar archivos .json
+    "resolveJsonModule": true, // Permite importar archivos .json
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/@types"
+    ],
   },
   "include": [
     "src/**/*"

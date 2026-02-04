@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { Product } from '../model/productModel';
 import { productSchema } from '../validator/productValidator'
-
+import { uploadToCloudinary } from '../config/cloudinary';
 
 const getProducts = async (req: Request, res: Response) => {
   try {
@@ -13,22 +13,20 @@ const getProducts = async (req: Request, res: Response) => {
 };
 
 
-const addProduct = async (req: Request, res: Response) => {
+const addProduct = async (req: any, res: any) => {
   try {
-    // Validar con Zod antes de tocar la DB
-    const validation = productSchema.safeParse(req.body);
-    if (!validation.success) {
-      return res.status(400).json({
-        message: "Datos inválidos",
-        errors: validation.error.issues
-      });
+    let imageUrl = "";
+
+    if (req.file) {
+      // Subimos el buffer de la imagen a Cloudinary
+      const result: any = await uploadToCloudinary(req.file.buffer);
+      imageUrl = result.secure_url;
     }
 
-    const newProduct = new Product(req.body);
-    await newProduct.save();
-    res.status(201).json({ message: "Producto creado con éxito", newProduct });
+    // Luego guardas en la base de datos con imageUrl
+    // ... resto de tu código de Mongoose
   } catch (error) {
-    res.status(500).json({ message: "Error al crear el producto", error });
+    res.status(500).json({ message: "Error al subir imagen" });
   }
 };
 

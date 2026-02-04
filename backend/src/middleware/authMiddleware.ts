@@ -48,11 +48,11 @@ const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
     }
   }
 }
-const isAdmin = (req: Request, res: Response, next: NextFunction) => {
-  if ((req as any).user && (req as any).user.role === 'admin') {
+const isAdmin = (req: any, res: any, next: any) => {
+  if (req.user && req.user.email === process.env.ADMIN_EMAIL) {
     next();
   } else {
-    res.status(403).json({ message: "Acceso restringido: Solo para Administradores" });
+    res.status(403).json({ message: "Acceso denegado: No eres el administrador de SeloYah" });
   }
 };
 
