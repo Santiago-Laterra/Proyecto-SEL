@@ -54,8 +54,12 @@ const login = async (req: Request, res: Response) => {
 
     // creacion de token
     const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET || 'secret_fallback',
+      {
+        id: user._id,
+        email: user.email, // <--- ESTA ES LA LÍNEA CLAVE QUE AGREGAMOS
+        role: user.role
+      },
+      process.env.JWT_SECRET as string, // Usamos 'as string' para que TS no chille
       { expiresIn: '1d' }
     );
 
