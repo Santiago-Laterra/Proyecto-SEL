@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getProducts, addProduct, updateProduct, deleteProduct } from '../controllers/productController';
+import { getProducts, addProduct, updateProduct, deleteProduct, exportProductsExcel } from '../controllers/productController';
 import { authMiddleware, isAdmin } from '../middleware/authMiddleware';
 import { upload } from "../config/cloudinary";
 import { exportProductsToExcel } from '../controllers/adminController';
