@@ -4,6 +4,7 @@ import dotenv from "dotenv"
 import authRoutes from "./routes/authRoute";
 import productRoutes from "./routes/productRoutes";
 import cors from "cors";
+import paymentRoutes from './routes/paymentRoutes';
 
 dotenv.config()
 
@@ -16,6 +17,7 @@ app.use(express.json());
 // Rutas de la API
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Ruta de prueba para el Admin
 app.get("/", (__, res) => {
