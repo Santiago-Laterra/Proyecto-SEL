@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Header from '../pages/Header';
 import Home from '../pages/Home';
 import Login from '../pages/Login';
 import Dashboard from '../pages/Dashboard'; // Importamos la nueva página
@@ -7,6 +8,9 @@ import ProtectedRoute from '../components/ProtectedRoute'; // Importamos el prot
 const RouterApp = () => {
   return (
     <BrowserRouter>
+
+      <Header />
+
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
