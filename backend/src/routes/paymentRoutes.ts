@@ -1,10 +1,13 @@
 import { Router } from 'express';
-import { createPreference } from '../controllers/paymentController';
+import { createPreference, receiveWebhook } from '../controllers/paymentController';
 import { authMiddleware } from '../middleware/authMiddleware';
 
 const router = Router();
 
 // Protegemos la ruta: solo usuarios logueados pueden generar pagos
 router.post('/create-preference', authMiddleware, createPreference);
+
+//Publica para que mercado pago mande la notificacion
+router.post('/webhook', receiveWebhook);
 
 export default router;
