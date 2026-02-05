@@ -22,7 +22,7 @@ const addProduct = async (req: any, res: any) => {
       stock: Number(req.body.stock),
     };
 
-    // 2. Validar con los datos ya convertidos
+    // 2. Validar con Zod
     const validation = productSchema.safeParse(dataToValidate);
 
     if (!validation.success) {
@@ -33,19 +33,21 @@ const addProduct = async (req: any, res: any) => {
       });
     }
 
-    // 3. Verificar que el archivo de imagen exista
+    // 3. Verificar imagen
     if (!req.file) {
       return res.status(400).json({ message: "La imagen es obligatoria" });
     }
 
-    // 4. Subir la imagen a Cloudinary usando el Buffer
+    // 4. Subir a Cloudinary (Esto ya te da la URL limpia)
     const result: any = await uploadToCloudinary(req.file.buffer);
     const imageUrl = result.secure_url;
 
-    // 4. Crear y guardar el producto en MongoDB
+    // 5. Crear el producto usando los datos LIMPIOS de Zod
     const newProduct = new Product({
-      ...req.body, // Trae name, price, description, etc.
-      image: imageUrl // Agrega la URL que nos dio Cloudinary
+      // USAMOS validation.data en lugar de req.body
+      // Esto asegura que price sea número y los strings estén trimeados si tu schema lo hace
+      ...validation.data,
+      image: imageUrl // La URL segura de Cloudinary sin espacios
     });
 
     await newProduct.save();
