@@ -10,7 +10,7 @@ export const AuthProvider = ({ children }) => {
   // Verificar si hay una sesión activa al cargar la página
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (token) {
+    if (token || localStorage.getItem('user')) {
       // Aquí podrías hacer una petición al backend para validar el token
       // Por ahora, simulamos que recuperamos los datos del usuario del localStorage
       const savedUser = JSON.parse(localStorage.getItem('user'));
