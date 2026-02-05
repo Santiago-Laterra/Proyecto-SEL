@@ -4,7 +4,7 @@ import Home from '../pages/Home';
 import Login from '../pages/Login';
 import Dashboard from '../pages/Dashboard'; // Importamos la nueva página
 import ProtectedRoute from '../components/ProtectedRoute'; // Importamos el protector
-
+import Footer from '../pages/Footer';
 const RouterApp = () => {
   return (
     <BrowserRouter>
@@ -20,6 +20,8 @@ const RouterApp = () => {
           <Route path="/dashboard" element={<Dashboard />} />
         </Route>
       </Routes>
+
+      <Footer />
     </BrowserRouter>
   );
 };
