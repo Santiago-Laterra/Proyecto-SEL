@@ -1,60 +1,90 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login } = useAuth();
+  const [error, setError] = useState('');
+
+  const { login } = useAuth(); // Nuestra función mágica del Contexto
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+
     try {
-      const user = await login(email, password);
-      // Si es admin, lo mandamos directo al dashboard
-      if (user.role === 'admin') navigate('/admin');
-      else navigate('/');
+      // 1. Intentamos loguear con los datos del formulario
+      await login(email, password);
+
+      // 2. Si el backend responde OK, el AuthContext guarda el token y el rol solo
+      // 3. Redirigimos a la Home, donde ya aparecerá el botón de Excel si es Admin
+      navigate('/');
     } catch (err) {
-      alert(err);
+      // Si el backend tira 401 o 400, mostramos el error
+      setError(typeof err === 'string' ? err : "Correo o contraseña incorrectos");
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white px-4">
-      <div className="max-w-md w-full text-center">
-        <h1 className="text-4xl font-normal text-gray-800 mb-2">Inicia sesión en tu cuenta</h1>
-        <p className="text-gray-600 mb-8">Introduce tu dirección de correo electrónico y contraseña</p>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-white p-4">
+      <div className="w-full max-w-md">
+        <h1 className="text-4xl font-semibold text-center text-gray-800 mb-2">
+          Inicia sesión en tu cuenta
+        </h1>
+        <p className="text-center text-gray-500 mb-8">
+          Introduce tu dirección de correo electrónico y contraseña
+        </p>
 
-        <form onSubmit={handleSubmit} className="space-y-4 text-left">
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4 text-center">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-gray-700 mb-1">Dirección de correo electrónico</label>
             <input
               type="email"
-              className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              placeholder="Correo electrónico"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
               required
             />
           </div>
+
           <div>
             <label className="block text-gray-700 mb-1">Contraseña</label>
             <input
               type="password"
-              className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-emerald-500"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
               required
             />
           </div>
-          <button className="w-full bg-[#008060] text-white font-semibold py-3 rounded-md hover:bg-[#006e52] transition-colors flex items-center justify-center">
-            Iniciar sesión <span className="ml-2">→</span>
+
+          <button
+            type="submit"
+            className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-semibold py-3 rounded-md transition duration-200 flex items-center justify-center gap-2"
+          >
+            Iniciar sesión <span className="text-xl">→</span>
           </button>
         </form>
 
-        <div className="mt-6 space-y-2">
-          <a href="#" className="text-emerald-700 block text-sm hover:underline">¿Has olvidado la contraseña?</a>
-          <a href="#" className="text-emerald-700 block text-sm hover:underline">Crear cuenta</a>
+        <div className="mt-8 text-center space-y-2">
+          <p>
+            <Link to="/forgot-password" size="sm" className="text-gray-600 hover:underline">
+              ¿Has olvidado la contraseña?
+            </Link>
+          </p>
+          <p>
+            <Link to="/register" className="text-gray-600 hover:underline">
+              Crear cuenta
+            </Link>
+          </p>
         </div>
       </div>
     </div>
