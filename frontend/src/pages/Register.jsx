@@ -19,15 +19,23 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
     try {
-      await api.post('/auth/register', {
-        username: `${formData.firstName} ${formData.lastName}`,
-        email: formData.email,
+      const userData = {
+        // CAMBIAMOS 'username' POR 'name' QUE ES LO QUE PIDE TU BACKEND
+        name: `${formData.firstName} ${formData.lastName}`.trim(),
+        email: formData.email.toLowerCase(),
         password: formData.password
-      });
-      alert("Cuenta creada con éxito");
+      };
+
+      console.log("Enviando a backend:", userData);
+
+      const response = await api.post('/auth/register', userData);
+
+      alert("¡Cuenta creada con éxito! Bienvenida a SeloYah.");
       navigate('/login');
     } catch (err) {
+      console.error("Error capturado:", err.response?.data);
       alert(err.response?.data?.message || "Error al registrarse");
     } finally {
       setLoading(false);
@@ -35,75 +43,70 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center pt-32 px-4 pb-20">
-      {/* Contenedor principal con el ancho exacto de Payhip */}
-      <div className="w-full max-w-150">
+    <div className="min-h-[80vh] bg-white flex flex-col items-center pt-24 px-4">
+      <div className="w-full max-w-125">
         <h1 className="text-[32px] font-normal text-[#111] text-center mb-4">Crear cuenta de cliente</h1>
-        <p className="text-gray-500 text-[15px] text-center mb-12">
+        <p className="text-gray-500 text-[15px] text-center mb-10 leading-relaxed">
           Cree una cuenta de cliente para guardar todos sus pedidos en un solo lugar
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Nombre y Apellidos en la misma línea */}
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 flex flex-col gap-2">
-              <label className="text-[15px] text-[#111] font-medium">Nombre</label>
+            <div className="flex-1 flex flex-col gap-1.5">
+              <label className="text-[14px] text-[#111] font-medium">Nombre</label>
               <input
                 type="text"
                 name="firstName"
                 required
                 value={formData.firstName}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md p-3 outline-none focus:ring-1 focus:ring-emerald-600 focus:border-emerald-600 transition-all"
+                className="w-full border border-gray-300 rounded-md p-2.5 outline-none focus:border-emerald-600 transition-all text-sm"
               />
             </div>
-            <div className="flex-1 flex flex-col gap-2">
-              <label className="text-[15px] text-[#111] font-medium">Apellidos</label>
+            <div className="flex-1 flex flex-col gap-1.5">
+              <label className="text-[14px] text-[#111] font-medium">Apellidos</label>
               <input
                 type="text"
                 name="lastName"
                 required
                 value={formData.lastName}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md p-3 outline-none focus:ring-1 focus:ring-emerald-600 focus:border-emerald-600 transition-all"
+                className="w-full border border-gray-300 rounded-md p-2.5 outline-none focus:border-emerald-600 transition-all text-sm"
               />
             </div>
           </div>
 
-          {/* Email */}
-          <div className="flex flex-col gap-2">
-            <label className="text-[15px] text-[#111] font-medium">Dirección de correo electrónico</label>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[14px] text-[#111] font-medium">Dirección de correo electrónico</label>
             <input
               type="email"
               name="email"
               required
               value={formData.email}
               onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md p-3 outline-none focus:ring-1 focus:ring-emerald-600 focus:border-emerald-600 transition-all"
+              className="w-full border border-gray-300 rounded-md p-2.5 outline-none focus:border-emerald-600 transition-all text-sm"
             />
           </div>
 
-          {/* Password */}
-          <div className="flex flex-col gap-2">
-            <label className="text-[15px] text-[#111] font-medium">Contraseña</label>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[14px] text-[#111] font-medium">Contraseña</label>
             <input
               type="password"
               name="password"
               required
               value={formData.password}
               onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md p-3 outline-none focus:ring-1 focus:ring-emerald-600 focus:border-emerald-600 transition-all"
+              className="w-full border border-gray-300 rounded-md p-2.5 outline-none focus:border-emerald-600 transition-all text-sm"
             />
           </div>
 
-          {/* Botón Verde Payhip */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#007b5e] hover:bg-[#00664e] text-white font-bold py-4 rounded-md flex items-center justify-center gap-2 transition-all mt-4 text-[16px]"
+            className="w-full bg-[#007b5e] hover:bg-[#00664e] text-white font-bold py-3.5 rounded-md flex items-center justify-center gap-2 transition-all mt-4"
           >
             {loading ? "Cargando..." : "Crear cuenta"}
-            {!loading && <span className="text-xl">→</span>}
+            {!loading && <span className="text-lg">→</span>}
           </button>
         </form>
       </div>
