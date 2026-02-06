@@ -126,18 +126,18 @@ const Home = () => {
             <img
               src={fotoPerfil}
               alt="Aylen - Creadora de Soleyah"
-              className="w-48 h-48 md:w-64 md:h-64 rounded-full object-cover border-4 border-white shadow-lg"
+              className="w-48 h-48 md:w-38 md:h-38 rounded-full object-cover border-4 border-white shadow-lg"
             />
           </div>
 
           {/* Texto Descriptivo */}
           <div className="flex-1 text-left">
-            <h2 className="text-3xl font-serif mb-6 text-slate-800">Sobre mí</h2>
-            <p className="text-slate-600 leading-relaxed mb-8 text-lg">
+            <h2 className="text-2xl font-serif mb-6 text-slate-800">Sobre mí</h2>
+            <p className="text-slate-600 leading-relaxed mb-8 text-1xl">
               ¡Hola! Soy Aylen, creadora de Soleyah, una tienda online de Arte & Diseño
               que ofrece piezas estéticas, funcionales y con el mensaje correcto.
             </p>
-            <button className="bg-[#008162] text-white px-8 py-3 rounded-md font-medium flex items-center gap-2 hover:bg-[#006b52] transition-colors">
+            <button className="bg-[#008162] text-white px-5 py-3 rounded-md font-medium flex items-center gap-2 hover:bg-[#006b52] transition-colors text-[16px]">
               <span>+</span> Seguir
             </button>
           </div>
