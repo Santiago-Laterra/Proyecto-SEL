@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Search, User, ShoppingBag } from 'lucide-react';
 import CartDrawer from '../components/CartDrawer';
 import { useCart } from '../context/CartContext';
+import UserDrawer from './UserDrawer';
 
 const Header = () => {
   const { isAdmin, user } = useAuth();
