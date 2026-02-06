@@ -14,8 +14,6 @@ router.get('/', getProducts);
 router.get('/:id', getProductById);
 
 
-
-
 // Rutas protegidas: Solo el Admin con un Token válido puede entrar
 router.put('/:id', authMiddleware, isAdmin, updateProduct);
 router.delete('/:id', authMiddleware, isAdmin, deleteProduct);
@@ -23,10 +21,6 @@ router.delete('/:id', authMiddleware, isAdmin, deleteProduct);
 
 // Lo aplicas solo en la ruta de creación (POST)
 router.post("/", authMiddleware, isAdmin, upload.single("image"), addProduct);
-
-
-
-
 
 
 

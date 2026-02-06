@@ -35,7 +35,7 @@ const Header = () => {
             </Link>
 
             {isAdmin && (
-              <Link to="/dashboard" className="text-emerald-600 font-bold hover:text-emerald-700">
+              <Link to="/admin" className="text-emerald-600 font-bold hover:text-emerald-700">
                 Dashboard
               </Link>
             )}

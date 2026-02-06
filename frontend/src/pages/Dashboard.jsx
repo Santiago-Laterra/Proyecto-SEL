@@ -65,7 +65,7 @@ const Dashboard = () => {
       setFile(null);
 
       // 5. Ahora sí funcionará porque navigate está definido
-      navigate('/');
+      navigate('/admin');
 
     } catch (error) {
       console.error("Error al cargar:", error);

@@ -6,27 +6,27 @@ import ProtectedRoute from '../components/ProtectedRoute';
 import Footer from '../pages/Footer';
 import ProductDetail from '../pages/ProductDetails';
 import AdminDashboard from '../pages/AdminDashboard'; // Este es el que terminamos recién
+import Dashboard from '../pages/Dashboard';
 
 const RouterApp = () => {
   return (
     <BrowserRouter>
       <Header />
-
       <Routes>
         {/* Rutas Públicas */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/product/:id" element={<ProductDetail />} />
 
-        {/* 🔒 BLOQUE PROTEGIDO: Solo accesible para Admin */}
+        {/* 🔒 BLOQUE PROTEGIDO */}
         <Route element={<ProtectedRoute />}>
-          {/* Limpiamos aquí: Solo dejamos una ruta para el dashboard. 
-              Usamos AdminDashboard que es el que tiene la tabla, los botones y el modal.
-          */}
-          <Route path="/dashboard" element={<AdminDashboard />} />
+          {/* La tabla principal del admin */}
+          <Route path="/admin" element={<AdminDashboard />} />
+
+          {/* El formulario para cargar productos nuevos */}
+          <Route path="/dashboard" element={<Dashboard />} />
         </Route>
       </Routes>
-
       <Footer />
     </BrowserRouter>
   );
