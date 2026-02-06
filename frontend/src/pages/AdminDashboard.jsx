@@ -5,8 +5,6 @@ import { Pencil, Trash2, Plus, FileSpreadsheet, X } from 'lucide-react';
 const AdminDashboard = () => {
   const [products, setProducts] = useState([]);
   const [editingProduct, setEditingProduct] = useState(null);
-
-  // Estados para el formulario de edición
   const [editName, setEditName] = useState("");
   const [editPrice, setEditPrice] = useState("");
 
@@ -23,13 +21,39 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleExportExcel = async () => {
+    try {
+      // Obtenemos el token del localStorage (asegurate que el nombre sea el mismo que usas al loguear)
+      const token = localStorage.getItem('token');
+
+      const response = await api.get('/products/export-excel', {
+        responseType: 'blob',
+        headers: {
+          'Authorization': `Bearer ${token}` // ESTO ES LO QUE FALTA
+        }
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'Inventario_SeloYah.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error al descargar:", error);
+      alert("No tienes permisos o la sesión expiró. Volvé a loguear.");
+    }
+  };
+
   const handleDelete = async (id) => {
     if (window.confirm("¿Estás segura de que querés borrar este producto?")) {
       try {
         await api.delete(`/products/${id}`);
         fetchProducts();
       } catch (error) {
-        alert("No se pudo eliminar el producto");
+        alert("No se pudo eliminar");
       }
     }
   };
@@ -49,7 +73,7 @@ const AdminDashboard = () => {
       setEditingProduct(null);
       fetchProducts();
     } catch (error) {
-      alert("Error al actualizar el producto");
+      alert("Error al actualizar");
     }
   };
 
@@ -68,13 +92,18 @@ const AdminDashboard = () => {
             <button className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-700 transition-all">
               <Plus size={18} /> Nuevo Producto
             </button>
-            <button className="flex items-center gap-2 border border-emerald-600 text-emerald-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-50 transition-all">
+
+            {/* BOTÓN DE EXCEL ACTUALIZADO */}
+            <button
+              onClick={handleExportExcel}
+              className="flex items-center gap-2 border border-emerald-600 text-emerald-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-50 transition-all active:scale-95"
+            >
               <FileSpreadsheet size={18} /> Exportar Excel
             </button>
           </div>
         </div>
 
-        {/* Tabla de Productos */}
+        {/* Tabla de Productos (Mismo código de antes...) */}
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-gray-50 text-slate-500 text-xs uppercase tracking-widest">
@@ -91,21 +120,15 @@ const AdminDashboard = () => {
                     <img src={product.image} alt="" className="w-12 h-12 rounded-lg object-cover border border-gray-100" />
                     <span className="font-medium text-slate-700">{product.name}</span>
                   </td>
-                  <td className="px-6 py-4 text-slate-600 font-medium">
+                  <td className="px-6 py-4 text-slate-600 font-medium italic">
                     {Number(product.price).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
-                      <button
-                        onClick={() => openEditModal(product)}
-                        className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
-                      >
+                      <button onClick={() => openEditModal(product)} className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all">
                         <Pencil size={18} />
                       </button>
-                      <button
-                        onClick={() => handleDelete(product._id)}
-                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                      >
+                      <button onClick={() => handleDelete(product._id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
                         <Trash2 size={18} />
                       </button>
                     </div>
@@ -117,53 +140,27 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Modal de Edición */}
+      {/* Modal de Edición (Mismo código de antes...) */}
       {editingProduct && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-100 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl relative">
-            <button
-              onClick={() => setEditingProduct(null)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-black"
-            >
+            <button onClick={() => setEditingProduct(null)} className="absolute top-4 right-4 text-gray-400 hover:text-black">
               <X size={20} />
             </button>
-
             <h2 className="text-xl font-serif mb-6 text-slate-800">Editar Producto</h2>
-
             <div className="space-y-4">
               <div>
                 <label className="text-xs uppercase tracking-widest text-slate-400 font-bold italic">Nombre del producto</label>
-                <input
-                  type="text"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  className="w-full border-b border-gray-200 py-2 focus:border-emerald-500 outline-none transition-colors text-slate-700"
-                />
+                <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full border-b border-gray-200 py-2 focus:border-emerald-500 outline-none transition-colors text-slate-700" />
               </div>
               <div>
                 <label className="text-xs uppercase tracking-widest text-slate-400 font-bold italic">Precio (ARS)</label>
-                <input
-                  type="number"
-                  value={editPrice}
-                  onChange={(e) => setEditPrice(e.target.value)}
-                  className="w-full border-b border-gray-200 py-2 focus:border-emerald-500 outline-none transition-colors text-slate-700"
-                />
+                <input type="number" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} className="w-full border-b border-gray-200 py-2 focus:border-emerald-500 outline-none transition-colors text-slate-700" />
               </div>
             </div>
-
             <div className="flex gap-3 mt-8">
-              <button
-                onClick={() => setEditingProduct(null)}
-                className="flex-1 py-3 text-slate-500 font-medium hover:bg-gray-50 rounded-xl transition-all"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleUpdate}
-                className="flex-1 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all"
-              >
-                Guardar Cambios
-              </button>
+              <button onClick={() => setEditingProduct(null)} className="flex-1 py-3 text-slate-500 font-medium hover:bg-gray-50 rounded-xl transition-all">Cancelar</button>
+              <button onClick={handleUpdate} className="flex-1 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all">Guardar Cambios</button>
             </div>
           </div>
         </div>
