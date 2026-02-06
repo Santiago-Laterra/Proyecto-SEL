@@ -45,6 +45,7 @@ const Login = () => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
+            <label className="block text-gray-700 mb-1">Dirección de correo electrónico</label>
             <input
               type="email"
               placeholder="Correo electrónico"
