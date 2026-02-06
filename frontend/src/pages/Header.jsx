@@ -1,18 +1,18 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Search, User, ShoppingBag } from 'lucide-react';
+import { Search, User as UserIcon, ShoppingBag } from 'lucide-react'; // Renombrado para evitar choques
 import CartDrawer from '../components/CartDrawer';
 import { useCart } from '../context/CartContext';
-import UserDrawer from './UserDrawer';
+import UserDrawer from '../components/UserDrawer';
 
 const Header = () => {
   const { isAdmin, user } = useAuth();
   const { cart } = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isUserOpen, setIsUserOpen] = useState(false); // Nuevo estado para el drawer de usuario
 
   const cartCount = cart.length;
-
 
   return (
     <>
@@ -28,7 +28,7 @@ const Header = () => {
         <div className="flex items-center">
           {/* Menú de navegación */}
           <div className="flex gap-8 text-[10.3px] uppercase tracking-[0.2em] font-medium text-slate-500 mr-10">
-            <Link to="/" className="hover:text-slate-900 transition-colors border-b-2 border-slate-900">
+            <Link to="/" className="hover:text-slate-900 transition-colors">
               Shop
             </Link>
             <Link to="/contact" className="hover:text-slate-900 transition-colors ">
@@ -48,11 +48,21 @@ const Header = () => {
               <Search size={18} strokeWidth={1.2} />
             </button>
 
-            <Link to={user ? "/profile" : "/login"} className="hover:text-slate-900 transition-transform hover:scale-110">
-              <User size={18} strokeWidth={1.2} />
-            </Link>
+            {/* Icono de Usuario: Si hay usuario abre Drawer, si no va a Login */}
+            {user ? (
+              <button
+                onClick={() => setIsUserOpen(true)}
+                className="hover:text-slate-900 transition-transform hover:scale-110"
+              >
+                <UserIcon size={18} strokeWidth={1.2} />
+              </button>
+            ) : (
+              <Link to="/login" className="hover:text-slate-900 transition-transform hover:scale-110">
+                <UserIcon size={18} strokeWidth={1.2} />
+              </Link>
+            )}
 
-            {/* Botón de Carrito con Contador dinámico */}
+            {/* Botón de Carrito */}
             <button
               className="hover:text-slate-900 relative transition-transform hover:scale-110"
               onClick={() => setIsCartOpen(true)}
@@ -68,14 +78,20 @@ const Header = () => {
         </div>
       </nav>
 
-      {/* RENDERIZAR EL DRAWER FUERA DE LA NAV PARA EVITAR PROBLEMAS DE Z-INDEX */}
+      {/* DRAWERS */}
       <CartDrawer
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
       />
 
-      {/* Espaciador para que el contenido no quede debajo del header fixed */}
-      <div className="h-25"></div>
+      <UserDrawer
+        isOpen={isUserOpen}
+        onClose={() => setIsUserOpen(false)}
+        user={user}
+      />
+
+      {/* Espaciador */}
+      <div className="h-28"></div>
     </>
   );
 };
