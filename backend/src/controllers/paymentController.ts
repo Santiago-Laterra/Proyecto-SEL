@@ -89,29 +89,34 @@ export const receiveWebhook = async (req: Request, res: Response) => {
     if (query.type === "payment") {
       const paymentId = query['data.id'] as string;
 
-      // 1. Consultar el estado del pago a Mercado Pago
+      // 1. Consultamos el estado del pago a Mercado Pago
       const payment = await new Payment(client).get({ id: paymentId });
 
       if (payment.status === "approved") {
-        const productId = payment.external_reference; // Recuperamos el ID que guardamos antes
+        // 2. Recuperamos el ID de la ORDEN (que guardamos en external_reference)
+        const orderId = payment.external_reference;
 
-        console.log(`Pago aprobado para el producto: ${productId}`);
+        console.log(`Pago aprobado para la orden: ${orderId}`);
 
-        /* // Lógica para descontar stock en MongoDB:
-        const product = await Product.findById(productId);
-        if (product && product.stock > 0) {
-          product.stock -= 1; // O la cantidad que venga en el item
-          await product.save();
-          console.log("Stock actualizado con éxito.");
-        }
+        // 3. ACTUALIZAMOS LA ORDEN EN MONGODB
+        // Cambiamos el estado de 'pending' a 'paid'
+        await Order.findByIdAndUpdate(orderId, { status: 'paid' });
+
+        console.log(`Orden ${orderId} marcada como PAGADA con éxito.`);
+
+        /* Opcional: Si además quieres descontar stock de los productos 
+           dentro de esa orden, podrías hacerlo aquí recorriendo 
+           order.items, pero con marcar la orden como pagada ya 
+           tienes lo principal para el Admin.
         */
       }
     }
 
+    // Siempre respondemos 200 a Mercado Pago para que no reintente el envío
     res.sendStatus(200);
 
-  } catch (error) {
-    console.error("Error en Webhook:", error);
+  } catch (error: any) {
+    console.error("Error en Webhook:", error.message || error);
     res.sendStatus(500);
   }
 };

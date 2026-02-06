@@ -1,8 +1,8 @@
-import { X, Trash2 } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
 const CartDrawer = ({ isOpen, onClose }) => {
-  const { cart, removeFromCart, cartTotal } = useCart();
+  const { cart, removeFromCart, cartTotal, shippingCost } = useCart();
 
   return (
     <>
@@ -11,8 +11,9 @@ const CartDrawer = ({ isOpen, onClose }) => {
         onClick={onClose}
       />
 
-      <div className={`fixed right-0 top-0 h-full w-full max-w-md bg-white z-70 shadow-2xl transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      <div className={`fixed right-0 top-0 h-full w-full max-w-md bg-white z-70 shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
 
+        {/* HEADER */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <h2 className="text-sm font-bold uppercase tracking-widest text-slate-800">Carrito de la compra</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-black transition-colors">
@@ -20,7 +21,8 @@ const CartDrawer = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6 max-h-[calc(100vh-250px)]">
+        {/* LISTA DE PRODUCTOS */}
+        <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
           {cart.length === 0 ? (
             <p className="text-center text-gray-500 mt-10 text-sm">Aún no se han añadido artículos al carrito</p>
           ) : (
@@ -44,14 +46,36 @@ const CartDrawer = ({ isOpen, onClose }) => {
           )}
         </div>
 
+        {/* BLOQUE DE PAGO UNIFICADO AL FINAL */}
         {cart.length > 0 && (
-          <div className="absolute bottom-0 left-0 w-full p-6 bg-white border-t border-gray-100">
-            <div className="flex justify-between items-center mb-6">
-              <span className="text-slate-600">Total</span>
-              <span className="text-xl font-bold italic">
-                {cartTotal.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}
+          <div className="p-6 bg-white border-t border-gray-100 space-y-3">
+
+            {/* Desglose de precios */}
+            <div className="flex justify-between text-slate-500 text-sm">
+              <span>Subtotal</span>
+              <span>${cartTotal.toLocaleString('es-AR')}</span>
+            </div>
+
+            <div className="flex justify-between text-slate-500 text-sm">
+              <span>Envío</span>
+              <span>
+                {shippingCost > 0
+                  ? `$ ${shippingCost.toLocaleString('es-AR')}`
+                  : "A calcular"}
               </span>
             </div>
+
+            {/* Total final sumado */}
+            <div className="flex justify-between items-center pt-4 border-t border-gray-100 mb-6">
+              <span className="text-lg font-serif text-slate-900">Total</span>
+              <span className="text-xl font-bold italic text-slate-900">
+                {((cartTotal + shippingCost)).toLocaleString('es-AR', {
+                  style: 'currency',
+                  currency: 'ARS'
+                })}
+              </span>
+            </div>
+
             <button className="w-full bg-[#007f5f] text-white py-4 rounded-md font-bold uppercase tracking-widest hover:bg-[#00664d] transition-all active:scale-[0.98]">
               Pago
             </button>

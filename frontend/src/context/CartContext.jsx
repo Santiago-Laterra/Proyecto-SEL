@@ -1,9 +1,12 @@
 // src/context/CartContext.jsx
 import { createContext, useState, useEffect, useContext } from 'react';
 
+
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
+
+  const [shippingCost, setShippingCost] = useState(0);
   // Inicializamos el carrito con lo que haya en localStorage o un array vacío
   const [cart, setCart] = useState(() => {
     const savedCart = localStorage.getItem('soleyah_cart');
@@ -14,6 +17,11 @@ export const CartProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('soleyah_cart', JSON.stringify(cart));
   }, [cart]);
+
+
+  const updateShipping = (cost) => {
+    setShippingCost(cost);
+  };
 
   // Función para añadir al carrito
   const addToCart = (product) => {
@@ -35,7 +43,7 @@ export const CartProvider = ({ children }) => {
   const cartTotal = cart.reduce((acc, item) => acc + Number(item.price), 0);
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, cartTotal }}>
+    <CartContext.Provider value={{ cart, addToCart, shippingCost, updateShipping, removeFromCart, cartTotal }}>
       {children}
     </CartContext.Provider>
   );
