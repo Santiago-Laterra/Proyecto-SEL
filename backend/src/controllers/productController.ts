@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import { Product } from '../model/productModel';
 import { productSchema } from '../validator/productValidator';
 import { uploadToCloudinary } from '../config/cloudinary';
-import * as ExcelJS from 'exceljs';
 
 const getProducts = async (req: Request, res: Response) => {
   try {
@@ -86,46 +85,6 @@ const deleteProduct = async (req: Request, res: Response) => {
 };
 
 
-const exportProductsExcel = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const products = await Product.find(); // Trae los datos de MongoDB
-
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Stock SeloYah');
-
-    // Definimos las columnas
-    worksheet.columns = [
-      { header: 'ID del Producto', key: '_id', width: 30 },
-      { header: 'Nombre', key: 'name', width: 30 },
-      { header: 'Precio', key: 'price', width: 15 },
-      { header: 'Categoría', key: 'category', width: 20 },
-      { header: 'Stock Actual', key: 'stock', width: 15 }
-    ];
-
-    // Agregamos las filas
-    products.forEach(product => {
-      worksheet.addRow({
-        _id: product._id.toString(),
-        name: product.name,
-        price: product.price,
-        category: product.category,
-        stock: product.stock
-      });
-    });
-
-    // Configuramos los headers para la descarga
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', 'attachment; filename=inventario_seloyah.xlsx');
-
-    await workbook.xlsx.write(res);
-    res.status(200).end();
-
-  } catch (error) {
-    console.error("Error al exportar:", error);
-    res.status(500).json({ message: "Error al generar el archivo Excel" });
-  }
-};
-
 const getProductById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -141,4 +100,4 @@ const getProductById = async (req: Request, res: Response) => {
   }
 };
 
-export { getProducts, addProduct, updateProduct, deleteProduct, exportProductsExcel, getProductById };
+export { getProducts, addProduct, updateProduct, deleteProduct, getProductById };
