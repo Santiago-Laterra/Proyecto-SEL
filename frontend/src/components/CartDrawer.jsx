@@ -24,7 +24,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
         return;
       }
 
-      const items = cart.map(product => ({
+      const itemsFormateados = cart.map(product => ({
         id: product._id,
         title: product.name,
         unit_price: Math.round(Number(product.price)),
@@ -33,9 +33,9 @@ const CartDrawer = ({ isOpen, onClose }) => {
       }));
 
       const payload = {
-        items,
+        items: itemsFormateados, // <--- CAMBIÁ 'cart' POR 'itemsFormateados'
+        userId: currentUserId,   // Usamos la variable que sacaste del storage
         shippingCost: shippingCost,
-        userId: currentUserId,
         shippingAddress: {
           street: "Calle Falsa",
           number: "123",

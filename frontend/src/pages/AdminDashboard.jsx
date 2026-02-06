@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
-import { Pencil, Trash2, Plus, FileSpreadsheet, X } from 'lucide-react';
+import { Pencil, Trash2, Plus, FileSpreadsheet, X, Package, ShoppingBag, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import * as XLSX from 'xlsx';
 
 const AdminDashboard = () => {
-  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('products'); // 'products' o 'orders'
+  const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  // --- ESTADOS PARA EDICIÓN ---
+  // Estados para edición
   const [editingProduct, setEditingProduct] = useState(null);
   const [editName, setEditName] = useState("");
   const [editPrice, setEditPrice] = useState("");
@@ -15,6 +19,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchProducts();
+    fetchOrders();
   }, []);
 
   const fetchProducts = async () => {
@@ -26,7 +31,40 @@ const AdminDashboard = () => {
     }
   };
 
-  // --- ABRIR MODAL CON DATOS ---
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/products/orders');
+      setOrders(res.data);
+    } catch (err) {
+      console.error("Error cargando pedidos", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- EXPORTAR VENTAS A EXCEL ---
+  const exportOrdersToExcel = () => {
+    if (orders.length === 0) return alert("No hay órdenes para exportar");
+
+    const dataToExport = orders.map(order => ({
+      ID_Pedido: order._id,
+      Fecha: new Date(order.createdAt).toLocaleDateString(),
+      Cliente: order.user?.name || 'Invitado',
+      Email: order.user?.email || 'N/A',
+      Total: order.totalAmount,
+      Envio: order.shippingCost,
+      Estado: order.status === 'paid' ? 'PAGADO' : 'PENDIENTE',
+      Direccion: `${order.shippingAddress?.street} ${order.shippingAddress?.number}, ${order.shippingAddress?.city}`
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Ventas SeloYah");
+    XLSX.writeFile(workbook, "Reporte_Ventas_SeloYah.xlsx");
+  };
+
+  // ... (Tus funciones handleUpdate, handleDelete, openEditModal se mantienen igual)
   const openEditModal = (product) => {
     setEditingProduct(product);
     setEditName(product.name);
@@ -34,7 +72,6 @@ const AdminDashboard = () => {
     setEditStock(product.stock || 0);
   };
 
-  // --- GUARDAR CAMBIOS ---
   const handleUpdate = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -42,8 +79,8 @@ const AdminDashboard = () => {
         { name: editName, price: Number(editPrice), stock: Number(editStock) },
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
-      setEditingProduct(null); // Cerrar modal
-      fetchProducts(); // Refrescar tabla
+      setEditingProduct(null);
+      fetchProducts();
       alert("Producto actualizado correctamente ✨");
     } catch (error) {
       alert("Error al actualizar el producto");
@@ -64,145 +101,136 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleExportExcel = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await api.get('/products/export-excel', {
-        responseType: 'blob',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'Inventario_SeloYah.xlsx');
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      alert("Error al descargar el Excel. Revisa la consola.");
-    }
-  };
-
   return (
     <div className="p-8 bg-gray-50 min-h-screen pt-28">
-      <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="max-w-6xl mx-auto">
 
-        {/* Header */}
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white">
-          <div>
-            <h1 className="text-2xl font-serif text-slate-800">Panel de Administración</h1>
-            <p className="text-sm text-slate-500">Gestioná tus calendarios y diseños</p>
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-700 transition-all"
-            >
-              <Plus size={18} /> Nuevo Producto
-            </button>
-            <button onClick={handleExportExcel} className="flex items-center gap-2 border border-emerald-600 text-emerald-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-50 transition-all">
-              <FileSpreadsheet size={18} /> Exportar Excel
-            </button>
-          </div>
+        {/* Selector de Pestañas */}
+        <div className="flex gap-4 mb-6">
+          <button
+            onClick={() => setActiveTab('products')}
+            className={`flex items-center gap-2 px-6 py-2 rounded-full font-medium transition-all ${activeTab === 'products' ? 'bg-slate-800 text-white shadow-md' : 'bg-white text-slate-500 hover:bg-gray-100'}`}
+          >
+            <Package size={18} /> Productos
+          </button>
+          <button
+            onClick={() => setActiveTab('orders')}
+            className={`flex items-center gap-2 px-6 py-2 rounded-full font-medium transition-all ${activeTab === 'orders' ? 'bg-slate-800 text-white shadow-md' : 'bg-white text-slate-500 hover:bg-gray-100'}`}
+          >
+            <ShoppingBag size={18} /> Ventas {orders.length > 0 && <span className="bg-emerald-500 text-[10px] px-1.5 rounded-full">{orders.length}</span>}
+          </button>
         </div>
 
-        {/* Tabla */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-gray-50 text-slate-500 text-xs uppercase tracking-widest">
-              <tr>
-                <th className="px-6 py-4 font-semibold">Producto</th>
-                <th className="px-6 py-4 font-semibold">Precio</th>
-                <th className="px-6 py-4 font-semibold text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {products.map((product) => (
-                <tr key={product._id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-6 py-4 flex items-center gap-4">
-                    <img src={product.image} alt="" className="w-12 h-12 rounded-lg object-cover border border-gray-100" />
-                    <span className="font-medium text-slate-700">{product.name}</span>
-                  </td>
-                  <td className="px-6 py-4 text-slate-600 font-medium italic">
-                    {Number(product.price).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2">
-                      <button onClick={() => openEditModal(product)} className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg">
-                        <Pencil size={18} />
-                      </button>
-                      <button onClick={() => handleDelete(product._id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          {/* Header Dinámico */}
+          <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white">
+            <div>
+              <h1 className="text-2xl font-serif text-slate-800">
+                {activeTab === 'products' ? 'Gestión de Inventario' : 'Control de Ventas'}
+              </h1>
+              <p className="text-sm text-slate-500">
+                {activeTab === 'products' ? 'Administrá tus calendarios y diseños' : 'Revisá quién compró y enviá sus pedidos'}
+              </p>
+            </div>
+            <div className="flex gap-3">
+              {activeTab === 'products' ? (
+                <>
+                  <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-700 transition-all">
+                    <Plus size={18} /> Nuevo
+                  </button>
+                </>
+              ) : (
+                <button onClick={exportOrdersToExcel} className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-all">
+                  <FileSpreadsheet size={18} /> Descargar Ventas (.xlsx)
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Contenido de la Tabla */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              {activeTab === 'products' ? (
+                <>
+                  <thead className="bg-gray-50 text-slate-500 text-xs uppercase tracking-widest">
+                    <tr>
+                      <th className="px-6 py-4 font-semibold">Producto</th>
+                      <th className="px-6 py-4 font-semibold">Precio</th>
+                      <th className="px-6 py-4 font-semibold text-right">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {products.map((product) => (
+                      <tr key={product._id} className="hover:bg-gray-50/50 transition-colors">
+                        <td className="px-6 py-4 flex items-center gap-4">
+                          <img src={product.image} alt="" className="w-12 h-12 rounded-lg object-cover border border-gray-100" />
+                          <span className="font-medium text-slate-700">{product.name}</span>
+                        </td>
+                        <td className="px-6 py-4 text-slate-600 font-medium italic">
+                          {Number(product.price).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}
+                        </td>
+                        <td className="px-6 py-4 text-right text-slate-400">
+                          <div className="flex justify-end gap-2">
+                            <button onClick={() => openEditModal(product)} className="p-2 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg"><Pencil size={18} /></button>
+                            <button onClick={() => handleDelete(product._id)} className="p-2 hover:text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={18} /></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </>
+              ) : (
+                <>
+                  <thead className="bg-gray-50 text-slate-500 text-xs uppercase tracking-widest">
+                    <tr>
+                      <th className="px-6 py-4 font-semibold">Cliente</th>
+                      <th className="px-6 py-4 font-semibold">Total</th>
+                      <th className="px-6 py-4 font-semibold">Estado</th>
+                      <th className="px-6 py-4 font-semibold">Fecha</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {orders.map((order) => (
+                      <tr key={order._id} className="hover:bg-gray-50/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="font-medium text-slate-700">{order.user?.name || 'Invitado'}</div>
+                          <div className="text-[10px] text-slate-400 font-mono">{order._id}</div>
+                        </td>
+                        <td className="px-6 py-4 text-slate-900 font-bold">
+                          ${(order.totalAmount + (order.shippingCost || 0)).toLocaleString('es-AR')}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${order.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                            {order.status === 'paid' ? 'PAGADO' : 'PENDIENTE'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-slate-500">
+                          {new Date(order.createdAt).toLocaleDateString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </>
+              )}
+            </table>
+          </div>
         </div>
       </div>
 
-      {/* --- MODAL DE EDICIÓN (POP-UP) --- */}
+      {/* --- MODAL DE EDICIÓN MANTENIDO --- */}
       {editingProduct && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-150 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in duration-200">
-            <button
-              onClick={() => setEditingProduct(null)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-slate-800 transition-colors"
-            >
-              <X size={24} />
-            </button>
-
-            <h2 className="text-2xl font-serif mb-6 text-slate-800 border-b pb-2">Editar Producto</h2>
-
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-200 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl relative">
+            <button onClick={() => setEditingProduct(null)} className="absolute top-4 right-4 text-gray-400 hover:text-slate-800"><X size={24} /></button>
+            <h2 className="text-2xl font-serif mb-6 text-slate-800">Editar Producto</h2>
             <div className="space-y-5">
-              <div>
-                <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block mb-1">Nombre</label>
-                <input
-                  type="text"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  className="w-full border-b-2 border-gray-100 py-2 focus:border-emerald-500 outline-none transition-colors text-slate-700 font-medium"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block mb-1">Precio (ARS)</label>
-                  <input
-                    type="number"
-                    value={editPrice}
-                    onChange={(e) => setEditPrice(e.target.value)}
-                    className="w-full border-b-2 border-gray-100 py-2 focus:border-emerald-500 outline-none transition-colors text-slate-700 font-medium"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block mb-1">Stock</label>
-                  <input
-                    type="number"
-                    value={editStock}
-                    onChange={(e) => setEditStock(e.target.value)}
-                    className="w-full border-b-2 border-gray-100 py-2 focus:border-emerald-500 outline-none transition-colors text-slate-700 font-medium"
-                  />
-                </div>
-              </div>
+              <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full border-b-2 py-2 outline-none focus:border-emerald-500" placeholder="Nombre" />
+              <input type="number" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} className="w-full border-b-2 py-2 outline-none focus:border-emerald-500" placeholder="Precio" />
+              <input type="number" value={editStock} onChange={(e) => setEditStock(e.target.value)} className="w-full border-b-2 py-2 outline-none focus:border-emerald-500" placeholder="Stock" />
             </div>
-
             <div className="flex gap-3 mt-10">
-              <button
-                onClick={() => setEditingProduct(null)}
-                className="flex-1 py-3 text-slate-500 font-semibold hover:bg-gray-50 rounded-xl transition-all"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleUpdate}
-                className="flex-1 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all active:scale-95"
-              >
-                Guardar Cambios
-              </button>
+              <button onClick={() => setEditingProduct(null)} className="flex-1 py-3 text-slate-500 font-semibold hover:bg-gray-50 rounded-xl">Cancelar</button>
+              <button onClick={handleUpdate} className="flex-1 py-3 bg-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-200">Guardar</button>
             </div>
           </div>
         </div>
