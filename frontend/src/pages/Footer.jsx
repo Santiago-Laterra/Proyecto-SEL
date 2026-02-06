@@ -1,20 +1,13 @@
-import { useState } from 'react';
-import { ChevronDown, ChevronUp, Instagram } from 'lucide-react';
+import { Instagram } from 'lucide-react';
 
 const Footer = () => {
-  const [openIndex, setOpenIndex] = useState(null);
 
-  const faqs = [
-    { q: "¿Cómo recibo mi producto?", a: "¡Una vez hecho el pago te llegará un mail donde podrás descargar el archivo e imprimirlo para usar!" },
-    { q: "¿Cuántas veces puedo reproducir las plantillas?", a: "Las plantillas son para un uso único y personal (no comercial) pero si querés hacerle un regalo a alguien imprimiendo 2 copias del mismo, no me enojo ;)" },
-    { q: "Tengo otra duda", a: "Cualquier otra consulta podés hacerla en la sección 'Contacto' o escribiendo a mi instagram @aylensantoro" }
-  ];
 
   return (
     // Padding vertical exacto de 52.8px
     <>
       {/* Redes y Copyright centrado al final */}
-      <div className="mt-24 flex flex-col items-center gap-2 border-t border-gray-300">
+      <div className="mt-20 flex flex-col items-center gap-2 border-t border-gray-300">
         <a
           href="https://www.instagram.com/aylensantoro"
           target="_blank"

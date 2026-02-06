@@ -3,12 +3,14 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import fotoPerfil from "../assets/fotoDePerfil.avif";
 import { Link } from 'react-router-dom';
-
+import { ChevronDown, ChevronUp, Instagram } from 'lucide-react';
 
 const Home = () => {
   const { isAdmin } = useAuth();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true); // Estado de carga opcional
+  const [openIndex, setOpenIndex] = useState(null);
+
 
   // Función para exportar Excel (se mantiene igual)
   const handleExportExcel = async () => {
@@ -47,6 +49,13 @@ const Home = () => {
   }, []);
 
   if (loading) return <div className="text-center py-20">Cargando catálogo...</div>;
+
+
+  const faqs = [
+    { q: "¿Cómo recibo mi producto?", a: "¡Una vez hecho el pago te llegará un mail donde podrás descargar el archivo e imprimirlo para usar!" },
+    { q: "¿Cuántas veces puedo reproducir las plantillas?", a: "Las plantillas son para un uso único y personal (no comercial) pero si querés hacerle un regalo a alguien imprimiendo 2 copias del mismo, no me enojo ;)" },
+    { q: "Tengo otra duda", a: "Cualquier otra consulta podés hacerla en la sección 'Contacto' o escribiendo a mi instagram @aylensantoro" }
+  ];
 
   return (
     <>
@@ -195,7 +204,6 @@ const Home = () => {
               </div>
             ))}
           </div>
-
         </div>
       </section>
 
