@@ -7,6 +7,7 @@ import Footer from '../pages/Footer';
 import ProductDetail from '../pages/ProductDetails';
 import AdminDashboard from '../pages/AdminDashboard'; // Este es el que terminamos recién
 import Dashboard from '../pages/Dashboard';
+import Register from '../pages/Register';
 
 const RouterApp = () => {
   return (
@@ -16,6 +17,7 @@ const RouterApp = () => {
         {/* Rutas Públicas */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         <Route path="/product/:id" element={<ProductDetail />} />
 
         {/* 🔒 BLOQUE PROTEGIDO */}
