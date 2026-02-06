@@ -2,25 +2,28 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Header from '../pages/Header';
 import Home from '../pages/Home';
 import Login from '../pages/Login';
-import Dashboard from '../pages/Dashboard'; // Importamos la nueva página
-import ProtectedRoute from '../components/ProtectedRoute'; // Importamos el protector
+import ProtectedRoute from '../components/ProtectedRoute';
 import Footer from '../pages/Footer';
-import ProductDetail from '../pages/ProductDetails'
+import ProductDetail from '../pages/ProductDetails';
+import AdminDashboard from '../pages/AdminDashboard'; // Este es el que terminamos recién
 
 const RouterApp = () => {
   return (
     <BrowserRouter>
-
       <Header />
 
       <Routes>
+        {/* Rutas Públicas */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/product/:id" element={<ProductDetail />} />
 
-        {/* 🔒 BLOQUE PROTEGIDO: Todo lo que esté acá adentro requiere ser Admin */}
+        {/* 🔒 BLOQUE PROTEGIDO: Solo accesible para Admin */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<Dashboard />} />
+          {/* Limpiamos aquí: Solo dejamos una ruta para el dashboard. 
+              Usamos AdminDashboard que es el que tiene la tabla, los botones y el modal.
+          */}
+          <Route path="/dashboard" element={<AdminDashboard />} />
         </Route>
       </Routes>
 

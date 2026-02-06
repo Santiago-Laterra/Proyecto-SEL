@@ -1,23 +1,55 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
-import { Pencil, Trash2, Plus, FileSpreadsheet } from 'lucide-react';
+import { Pencil, Trash2, Plus, FileSpreadsheet, X } from 'lucide-react';
 
 const AdminDashboard = () => {
   const [products, setProducts] = useState([]);
+  const [editingProduct, setEditingProduct] = useState(null);
+
+  // Estados para el formulario de edición
+  const [editName, setEditName] = useState("");
+  const [editPrice, setEditPrice] = useState("");
 
   useEffect(() => {
     fetchProducts();
   }, []);
 
   const fetchProducts = async () => {
-    const res = await api.get('/products');
-    setProducts(res.data);
+    try {
+      const res = await api.get('/products');
+      setProducts(res.data);
+    } catch (error) {
+      console.error("Error al traer productos:", error);
+    }
   };
 
   const handleDelete = async (id) => {
     if (window.confirm("¿Estás segura de que querés borrar este producto?")) {
-      await api.delete(`/products/${id}`);
-      fetchProducts(); // Recargamos la lista
+      try {
+        await api.delete(`/products/${id}`);
+        fetchProducts();
+      } catch (error) {
+        alert("No se pudo eliminar el producto");
+      }
+    }
+  };
+
+  const openEditModal = (product) => {
+    setEditingProduct(product);
+    setEditName(product.name);
+    setEditPrice(product.price);
+  };
+
+  const handleUpdate = async () => {
+    try {
+      await api.put(`/products/${editingProduct._id}`, {
+        name: editName,
+        price: editPrice
+      });
+      setEditingProduct(null);
+      fetchProducts();
+    } catch (error) {
+      alert("Error al actualizar el producto");
     }
   };
 
@@ -43,43 +75,99 @@ const AdminDashboard = () => {
         </div>
 
         {/* Tabla de Productos */}
-        <table className="w-full text-left">
-          <thead className="bg-gray-50 text-slate-500 text-xs uppercase tracking-widest">
-            <tr>
-              <th className="px-6 py-4 font-semibold">Producto</th>
-              <th className="px-6 py-4 font-semibold">Precio</th>
-              <th className="px-6 py-4 font-semibold text-right">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {products.map((product) => (
-              <tr key={product._id} className="hover:bg-gray-50/50 transition-colors">
-                <td className="px-6 py-4 flex items-center gap-4">
-                  <img src={product.image} alt="" className="w-12 h-12 rounded-lg object-cover border border-gray-100" />
-                  <span className="font-medium text-slate-700">{product.name}</span>
-                </td>
-                <td className="px-6 py-4 text-slate-600 font-medium">
-                  {Number(product.price).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex justify-end gap-2">
-                    <button className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all" title="Editar">
-                      <Pencil size={18} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(product._id)}
-                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                      title="Eliminar"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-gray-50 text-slate-500 text-xs uppercase tracking-widest">
+              <tr>
+                <th className="px-6 py-4 font-semibold">Producto</th>
+                <th className="px-6 py-4 font-semibold">Precio</th>
+                <th className="px-6 py-4 font-semibold text-right">Acciones</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {products.map((product) => (
+                <tr key={product._id} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="px-6 py-4 flex items-center gap-4">
+                    <img src={product.image} alt="" className="w-12 h-12 rounded-lg object-cover border border-gray-100" />
+                    <span className="font-medium text-slate-700">{product.name}</span>
+                  </td>
+                  <td className="px-6 py-4 text-slate-600 font-medium">
+                    {Number(product.price).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => openEditModal(product)}
+                        className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                      >
+                        <Pencil size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(product._id)}
+                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      {/* Modal de Edición */}
+      {editingProduct && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl relative">
+            <button
+              onClick={() => setEditingProduct(null)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-black"
+            >
+              <X size={20} />
+            </button>
+
+            <h2 className="text-xl font-serif mb-6 text-slate-800">Editar Producto</h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs uppercase tracking-widest text-slate-400 font-bold italic">Nombre del producto</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full border-b border-gray-200 py-2 focus:border-emerald-500 outline-none transition-colors text-slate-700"
+                />
+              </div>
+              <div>
+                <label className="text-xs uppercase tracking-widest text-slate-400 font-bold italic">Precio (ARS)</label>
+                <input
+                  type="number"
+                  value={editPrice}
+                  onChange={(e) => setEditPrice(e.target.value)}
+                  className="w-full border-b border-gray-200 py-2 focus:border-emerald-500 outline-none transition-colors text-slate-700"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-8">
+              <button
+                onClick={() => setEditingProduct(null)}
+                className="flex-1 py-3 text-slate-500 font-medium hover:bg-gray-50 rounded-xl transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleUpdate}
+                className="flex-1 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all"
+              >
+                Guardar Cambios
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
