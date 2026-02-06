@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Product } from '../model/productModel';
 import * as XLSX from 'xlsx';
+import { Order } from '../model/orderModel';
 
 export const exportProductsToExcel = async (req: Request, res: Response) => {
   try {
@@ -30,5 +31,15 @@ export const exportProductsToExcel = async (req: Request, res: Response) => {
     return res.status(200).send(buffer);
   } catch (error: any) {
     res.status(500).json({ message: "Error en el servidor", error: error.message });
+  }
+};
+
+export const getAllOrders = async (req: Request, res: Response) => {
+  try {
+    // Buscamos todas las órdenes y traemos los datos del usuario (name y email)
+    const orders = await Order.find().populate('user', 'name email').sort({ createdAt: -1 });
+    res.status(200).json(orders);
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener pedidos", error });
   }
 };
