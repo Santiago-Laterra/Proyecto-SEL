@@ -126,4 +126,19 @@ const exportProductsExcel = async (req: Request, res: Response): Promise<void> =
   }
 };
 
-export { getProducts, addProduct, updateProduct, deleteProduct, exportProductsExcel };
+const getProductById = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const product = await Product.findById(id); // O la lógica que uses para tu DB
+
+    if (!product) {
+      return res.status(404).json({ message: "Producto no encontrado" });
+    }
+
+    res.json(product);
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener el producto", error });
+  }
+};
+
+export { getProducts, addProduct, updateProduct, deleteProduct, exportProductsExcel, getProductById };

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getProducts, addProduct, updateProduct, deleteProduct, exportProductsExcel } from '../controllers/productController';
+import { getProducts, addProduct, updateProduct, deleteProduct, exportProductsExcel, getProductById } from '../controllers/productController';
 import { authMiddleware, isAdmin } from '../middleware/authMiddleware';
 import { upload } from "../config/cloudinary";
 import { exportProductsToExcel } from '../controllers/adminController';
@@ -9,7 +9,7 @@ const router = Router();
 
 // Ruta pública: Cualquiera puede ver los productos
 router.get('/', getProducts);
-
+router.get('/:id', getProductById);
 
 // Solo el admin puede descargar este archivo
 router.get('/export-excel', authMiddleware, isAdmin, exportProductsToExcel);
