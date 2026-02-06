@@ -12,26 +12,7 @@ const Home = () => {
   const [openIndex, setOpenIndex] = useState(null);
 
 
-  // Función para exportar Excel (se mantiene igual)
-  const handleExportExcel = async () => {
-    try {
-      console.log("Iniciando descarga...");
-      const response = await api.get('/products/export-excel', {
-        responseType: 'blob'
-      });
 
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'Reporte_Ventas_SeloYah.xlsx');
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (error) {
-      console.error("No se pudo descargar el Excel", error);
-      alert("Error al descargar el archivo. Revisa la consola.");
-    }
-  };
 
   // Cargar productos al montar el componente
   useEffect(() => {
@@ -60,26 +41,6 @@ const Home = () => {
   return (
     <>
       <div className="max-w-7xl mx-auto px-4 py-10">
-        {/* Sección de Admin (Panel de Control mejorado) */}
-        {isAdmin && (
-          <div className="mb-12 p-6 bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-800">Panel de Administración</h2>
-              <p className="text-sm text-gray-500">Gestioná el inventario y exportá reportes</p>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={handleExportExcel}
-                className="bg-emerald-600 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-emerald-700 transition-all shadow-md active:scale-95 flex items-center gap-2"
-              >
-                📥 Exportar a Excel
-              </button>
-              {/* Aquí podrías agregar el botón de "Nuevo Producto" pronto */}
-            </div>
-          </div>
-        )}
-
-
         {/* Grilla de Productos */}
         {products.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
