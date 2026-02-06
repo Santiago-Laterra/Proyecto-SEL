@@ -1,9 +1,62 @@
 import { X } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useState } from 'react';
+import api from '../services/api';
 
 const CartDrawer = ({ isOpen, onClose }) => {
-  const { cart, removeFromCart, cartTotal, shippingCost } = useCart();
 
+  const { cart, removeFromCart, cartTotal, shippingCost } = useCart();
+  const [loading, setLoading] = useState(false);
+
+  const handleCheckout = async () => {
+    if (cart.length === 0) return;
+
+    setLoading(true);
+    try {
+      // 1. Extraer el ID correctamente del objeto 'user' que vimos en tu LocalStorage
+      const userStorage = localStorage.getItem('user');
+      const userData = userStorage ? JSON.parse(userStorage) : null;
+      const currentUserId = userData?.id; // Esto saca el "698634..." que vimos en la foto
+
+      if (!currentUserId) {
+        alert("Debes estar logueado para comprar");
+        setLoading(false);
+        return;
+      }
+
+      const items = cart.map(product => ({
+        id: product._id,
+        title: product.name,
+        unit_price: Math.round(Number(product.price)),
+        quantity: 1,
+        currency_id: "ARS"
+      }));
+
+      const payload = {
+        items,
+        shippingCost: shippingCost,
+        userId: currentUserId,
+        shippingAddress: {
+          street: "Calle Falsa",
+          number: "123",
+          city: "Lomas de Zamora",
+          zipCode: "1832"
+        }
+      };
+
+      // Aquí es donde el 'await' necesita que la función de arriba sea 'async'
+      const response = await api.post('/payments/create-preference', payload);
+
+      if (response.data.init_point) {
+        window.location.href = response.data.init_point;
+      }
+    } catch (error) {
+      console.error("Error completo:", error.response?.data);
+      alert("Error: " + (error.response?.data?.error || "Falla en el servidor"));
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <>
       <div
@@ -50,7 +103,6 @@ const CartDrawer = ({ isOpen, onClose }) => {
         {cart.length > 0 && (
           <div className="p-6 bg-white border-t border-gray-100 space-y-3">
 
-            {/* Desglose de precios */}
             <div className="flex justify-between text-slate-500 text-sm">
               <span>Subtotal</span>
               <span>${cartTotal.toLocaleString('es-AR')}</span>
@@ -65,7 +117,6 @@ const CartDrawer = ({ isOpen, onClose }) => {
               </span>
             </div>
 
-            {/* Total final sumado */}
             <div className="flex justify-between items-center pt-4 border-t border-gray-100 mb-6">
               <span className="text-lg font-serif text-slate-900">Total</span>
               <span className="text-xl font-bold italic text-slate-900">
@@ -76,8 +127,12 @@ const CartDrawer = ({ isOpen, onClose }) => {
               </span>
             </div>
 
-            <button className="w-full bg-[#007f5f] text-white py-4 rounded-md font-bold uppercase tracking-widest hover:bg-[#00664d] transition-all active:scale-[0.98]">
-              Pago
+            <button
+              onClick={handleCheckout}
+              disabled={loading}
+              className="w-full bg-[#007f5f] text-white py-4 rounded-md font-bold uppercase tracking-widest hover:bg-[#00664d] transition-all active:scale-[0.98] disabled:opacity-50"
+            >
+              {loading ? "Cargando..." : "Pago"}
             </button>
           </div>
         )}
