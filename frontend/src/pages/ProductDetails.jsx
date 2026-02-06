@@ -4,6 +4,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
 import { Heart } from 'lucide-react';
 import api from '../services/api'; // Tu servicio de axios
+import { useCart } from '../context/CartContext';
 
 // Estilos de Swiper
 import 'swiper/css';
@@ -21,7 +22,7 @@ const ProductDetail = () => {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
-
+  const { addToCart } = useCart();
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -91,10 +92,13 @@ const ProductDetail = () => {
           </p>
 
           <div className="flex flex-col gap-3 mt-4">
-            <button className="w-full bg-[#007f5f] text-white py-4 rounded-md font-bold hover:bg-[#00664d] transition-all active:scale-[0.98]">
+            <button
+              className="w-full bg-[#007f5f] text-white py-4 rounded-md font-bold hover:bg-[#00664d] transition-all active:scale-[0.98]"
+              onClick={() => addToCart(product)}>
               Añadir al carrito
             </button>
-            <button className="w-full border border-[#007f5f] text-[#007f5f] py-4 rounded-md font-bold hover:bg-slate-50 transition-all">
+            <button
+              className="w-full border border-[#007f5f] text-[#007f5f] py-4 rounded-md font-bold hover:bg-slate-50 transition-all">
               Compra ahora
             </button>
           </div>
