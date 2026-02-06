@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
-import { Pencil, Trash2, Plus, FileSpreadsheet, X, UploadCloud } from 'lucide-react';
+import { Pencil, Trash2, Plus, FileSpreadsheet, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
-  const [editingProduct, setEditingProduct] = useState(null);
 
-  // Estados para Edición
+  // --- ESTADOS PARA EDICIÓN ---
+  const [editingProduct, setEditingProduct] = useState(null);
   const [editName, setEditName] = useState("");
   const [editPrice, setEditPrice] = useState("");
+  const [editStock, setEditStock] = useState("");
 
   useEffect(() => {
     fetchProducts();
@@ -22,6 +23,44 @@ const AdminDashboard = () => {
       setProducts(res.data);
     } catch (error) {
       console.error("Error al traer productos:", error);
+    }
+  };
+
+  // --- ABRIR MODAL CON DATOS ---
+  const openEditModal = (product) => {
+    setEditingProduct(product);
+    setEditName(product.name);
+    setEditPrice(product.price);
+    setEditStock(product.stock || 0);
+  };
+
+  // --- GUARDAR CAMBIOS ---
+  const handleUpdate = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await api.put(`/products/${editingProduct._id}`,
+        { name: editName, price: Number(editPrice), stock: Number(editStock) },
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      setEditingProduct(null); // Cerrar modal
+      fetchProducts(); // Refrescar tabla
+      alert("Producto actualizado correctamente ✨");
+    } catch (error) {
+      alert("Error al actualizar el producto");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm("¿Estás segura de que querés borrar este producto?")) {
+      try {
+        const token = localStorage.getItem('token');
+        await api.delete(`/products/${id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        fetchProducts();
+      } catch (error) {
+        alert("No se pudo eliminar");
+      }
     }
   };
 
@@ -41,53 +80,19 @@ const AdminDashboard = () => {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      alert("Error al descargar el Excel.");
+      alert("Error al descargar el Excel. Revisa la consola.");
     }
   };
-
-  const handleDelete = async (id) => {
-    if (window.confirm("¿Estás segura de que querés borrar este producto?")) {
-      try {
-        const token = localStorage.getItem('token');
-        await api.delete(`/products/${id}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        fetchProducts();
-      } catch (error) {
-        alert("No se pudo eliminar");
-      }
-    }
-  };
-
-  const openEditModal = (product) => {
-    setEditingProduct(product);
-    setEditName(product.name);
-    setEditPrice(product.price);
-  };
-
-  const handleUpdate = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      await api.put(`/products/${editingProduct._id}`,
-        { name: editName, price: editPrice },
-        { headers: { 'Authorization': `Bearer ${token}` } }
-      );
-      setEditingProduct(null);
-      fetchProducts();
-    } catch (error) {
-      alert("Error al actualizar");
-    }
-  };
-
-
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen pt-28">
       <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+
+        {/* Header */}
         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white">
           <div>
             <h1 className="text-2xl font-serif text-slate-800">Panel de Administración</h1>
-            <p className="text-sm text-slate-500">Gestioná el inventario de SeloYah</p>
+            <p className="text-sm text-slate-500">Gestioná tus calendarios y diseños</p>
           </div>
           <div className="flex gap-3">
             <button
@@ -102,6 +107,7 @@ const AdminDashboard = () => {
           </div>
         </div>
 
+        {/* Tabla */}
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-gray-50 text-slate-500 text-xs uppercase tracking-widest">
@@ -123,10 +129,10 @@ const AdminDashboard = () => {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
-                      <button onClick={() => openEditModal(product)} className="p-2 text-slate-400 hover:text-emerald-600 rounded-lg">
+                      <button onClick={() => openEditModal(product)} className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg">
                         <Pencil size={18} />
                       </button>
-                      <button onClick={() => handleDelete(product._id)} className="p-2 text-slate-400 hover:text-red-600 rounded-lg">
+                      <button onClick={() => handleDelete(product._id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
                         <Trash2 size={18} />
                       </button>
                     </div>
@@ -137,6 +143,70 @@ const AdminDashboard = () => {
           </table>
         </div>
       </div>
+
+      {/* --- MODAL DE EDICIÓN (POP-UP) --- */}
+      {editingProduct && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-150 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in duration-200">
+            <button
+              onClick={() => setEditingProduct(null)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-slate-800 transition-colors"
+            >
+              <X size={24} />
+            </button>
+
+            <h2 className="text-2xl font-serif mb-6 text-slate-800 border-b pb-2">Editar Producto</h2>
+
+            <div className="space-y-5">
+              <div>
+                <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block mb-1">Nombre</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full border-b-2 border-gray-100 py-2 focus:border-emerald-500 outline-none transition-colors text-slate-700 font-medium"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block mb-1">Precio (ARS)</label>
+                  <input
+                    type="number"
+                    value={editPrice}
+                    onChange={(e) => setEditPrice(e.target.value)}
+                    className="w-full border-b-2 border-gray-100 py-2 focus:border-emerald-500 outline-none transition-colors text-slate-700 font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block mb-1">Stock</label>
+                  <input
+                    type="number"
+                    value={editStock}
+                    onChange={(e) => setEditStock(e.target.value)}
+                    className="w-full border-b-2 border-gray-100 py-2 focus:border-emerald-500 outline-none transition-colors text-slate-700 font-medium"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-10">
+              <button
+                onClick={() => setEditingProduct(null)}
+                className="flex-1 py-3 text-slate-500 font-semibold hover:bg-gray-50 rounded-xl transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleUpdate}
+                className="flex-1 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all active:scale-95"
+              >
+                Guardar Cambios
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
