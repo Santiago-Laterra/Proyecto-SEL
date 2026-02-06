@@ -7,17 +7,17 @@ const Footer = () => {
     // Padding vertical exacto de 52.8px
     <>
       {/* Redes y Copyright centrado al final */}
-      <div className="mt-20 flex flex-col items-center gap-2 border-t border-gray-300">
+      <div className="mt-10 pt-10 flex flex-col items-center gap-4 border-t border-gray-300 w-full">
         <a
           href="https://www.instagram.com/aylensantoro"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-gray-400 hover:text-slate-900 transition-colors"
+          className="text-slate-900 transition-colors"
         >
           <Instagram size={20} strokeWidth={1.2} />
         </a>
 
-        <div className="text-[10px] text-gray-700 uppercase tracking-[0.3em] mb-2">
+        <div className="text-[10px] text-gray-800 uppercase tracking-[0.3em] mb-2">
           © 2026 Soleyah - Arte & Diseño
         </div>
       </div>
