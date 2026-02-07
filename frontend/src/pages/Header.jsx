@@ -53,11 +53,11 @@ const Header = () => {
 
   return (
     <>
-      <nav className="flex justify-between items-center px-12 py-8 bg-white border-b border-gray-50 fixed w-full top-0 z-100">
+      <nav className="flex justify-between items-center px-12 py-8 bg-white border-b border-gray-200 fixed w-full top-0 z-50">
 
         {/* LADO IZQUIERDO: Siempre el Logo */}
         <div className="flex-none">
-          <Link to="/" className="text-4xl font-serif tracking-tighter text-slate-900">
+          <Link to="/" className="text-[40px] font-serif tracking-tighter text-slate-900">
             soleyah
           </Link>
         </div>
@@ -153,7 +153,7 @@ const Header = () => {
             </div>
           )}
         </div>
-      </nav>
+      </nav >
 
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
       <UserDrawer isOpen={isUserOpen} onClose={() => setIsUserOpen(false)} user={user} />

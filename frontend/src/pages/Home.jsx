@@ -13,7 +13,6 @@ const Home = () => {
 
 
 
-
   // Cargar productos al montar el componente
   useEffect(() => {
     const fetchProducts = async () => {
@@ -39,37 +38,32 @@ const Home = () => {
   ];
 
   return (
+
     <>
-      <div className="max-w-7xl mx-auto px-4 py-10">
+      <div className="max-w-7xl mx-auto px-15 pt-15" >
         {/* Grilla de Productos */}
         {products.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
             {products.map((product) => (
               <div key={product._id} className="group cursor-pointer">
                 {/* Contenedor de Imagen con Protección contra errores */}
-                <div className="aspect-square overflow-hidden bg-gray-100 rounded-2xl mb-4 border border-gray-100 flex items-center justify-center relative">
-                  <Link to={`/product/${product._id}`} className="overflow-hidden rounded-lg mb-4">
+                <div className="aspect-square overflow-hidden bg-gray-50 rounded-2xl mb-4 border border-gray-100 relative group">
+                  <Link to={`/product/${product._id}`} className="w-full h-full block">
                     {product.image ? (
                       <img
                         src={product.image.trim()}
                         alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                        // Si la URL de Cloudinary falla, cargamos una imagen por defecto
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         onError={(e) => {
-                          console.error("Fallo la carga de imagen para:", product.name);
-                          e.target.onerror = null;
-                          // Cambiamos el placeholder por uno más confiable
-                          e.target.src = 'https://placehold.co/600x600?text=SeloYah+Store';
+                          e.target.src = 'https://placehold.co/600x600?text=Soleyah+Store';
                         }}
                       />
                     ) : (
-                      <div className="text-gray-400 text-sm italic">Sin imagen</div>
+                      <div className="flex items-center justify-center h-full text-gray-400 text-sm italic">Sin imagen</div>
                     )}
-
                   </Link>
-
-                  {/* Overlay sutil al pasar el mouse (opcional, estilo Shop moderno) */}
-                  <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  {/* Overlay sutil */}
+                  <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                 </div>
 
                 {/* Detalles del Producto */}
@@ -98,7 +92,7 @@ const Home = () => {
       </div>
 
       {/* Sección Sobre mí */}
-      <section className="bg-gray-50 py-16 px-10 mt-20">
+      <section className="bg-gray-50 py-16 px-10 mt-10">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-12">
           {/* Imagen de Perfil Circular */}
           <div className="flex-none">
