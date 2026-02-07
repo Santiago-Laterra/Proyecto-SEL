@@ -25,7 +25,7 @@ const ProductDetail = () => {
   const [zipCode, setZipCode] = useState('');
   const [shippingCost, setShippingCost] = useState(null);
   const [calculating, setCalculating] = useState(false);
-  const { addToCart, updateShipping } = useCart();
+  const { addToCart, updateShipping, setZipCode: setGlobalZip } = useCart();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -45,14 +45,14 @@ const ProductDetail = () => {
     if (zipCode.length < 4) return alert("Por favor, ingresá un código postal válido");
     setCalculating(true);
     try {
-      // Si aún no tenés el backend de envío, podés simularlo así para probar:
-      // const fakeCost = zipCode.startsWith('1') ? 1500 : 2500;
-      // setShippingCost(fakeCost);
-      // updateShipping(fakeCost);
-
       const response = await api.post('/payments/shipping/calculate', { zipCode });
+
+      // AQUÍ ESTABA EL ERROR: Usamos setGlobalZip (la del contexto)
+      if (setGlobalZip) setGlobalZip(zipCode);
+
       setShippingCost(response.data.cost);
       if (updateShipping) updateShipping(response.data.cost);
+
     } catch (error) {
       console.error("Error al calcular envío:", error);
       alert("No se pudo calcular el envío.");

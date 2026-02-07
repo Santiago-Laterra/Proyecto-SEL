@@ -197,7 +197,7 @@ const AdminDashboard = () => {
                           <div className="text-[10px] text-slate-400 font-mono">{order._id}</div>
                         </td>
                         <td className="px-6 py-4 text-slate-900 font-bold">
-                          ${(order.totalAmount + (order.shippingCost || 0)).toLocaleString('es-AR')}
+                          ${order.totalAmount.toLocaleString('es-AR')}
                         </td>
                         <td className="px-6 py-4">
                           <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${order.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
