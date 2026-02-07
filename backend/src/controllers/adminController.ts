@@ -43,3 +43,19 @@ export const getAllOrders = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Error al obtener pedidos", error });
   }
 };
+
+export const deleteOrder = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const deletedOrder = await Order.findByIdAndDelete(id);
+
+    if (!deletedOrder) {
+      return res.status(404).json({ message: "Orden no encontrada" });
+    }
+
+    res.json({ message: "Orden eliminada correctamente" });
+  } catch (error) {
+    console.error("Error al eliminar orden:", error);
+    res.status(500).json({ message: "Error interno del servidor" });
+  }
+};
