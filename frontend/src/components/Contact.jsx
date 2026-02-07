@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import emailjs from '@emailjs/browser';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -10,8 +11,29 @@ const Contact = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Datos enviados:", formData);
-    alert("¡Mensaje enviado!");
+
+    const serviceID = 'service_6nal69e';
+    const templateID = 'template_6d6mnud';
+    const publicKey = 'eOS0A_1QEVqtXCPhZ';
+
+    const templateParams = {
+      nombre: formData.nombre,
+      apellidos: formData.apellidos,
+      email: formData.email,
+      mensaje: formData.mensaje,
+    };
+
+    // Usamos emailjs.send directamente desde la librería importada
+    emailjs.send(serviceID, templateID, templateParams, publicKey)
+      .then((result) => {
+        console.log('EXITO:', result.text);
+        alert("¡Mensaje enviado con éxito!");
+        setFormData({ nombre: '', apellidos: '', email: '', mensaje: '' });
+      })
+      .catch((err) => {
+        console.error('ERROR DETALLADO:', err);
+        alert("No se pudo enviar el mensaje. Error: " + err.text);
+      });
   };
 
   const handleChange = (e) => {
