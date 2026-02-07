@@ -8,6 +8,7 @@ import ProductDetail from '../pages/ProductDetails';
 import AdminDashboard from '../pages/AdminDashboard'; // Este es el que terminamos recién
 import Dashboard from '../pages/Dashboard';
 import Register from '../pages/Register';
+import Contact from '../components/Contact';
 
 const RouterApp = () => {
   return (
@@ -19,6 +20,7 @@ const RouterApp = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/product/:id" element={<ProductDetail />} />
+        <Route path="/contact" element={<Contact />} />
 
         {/* 🔒 BLOQUE PROTEGIDO */}
         <Route element={<ProtectedRoute />}>
