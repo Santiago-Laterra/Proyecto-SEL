@@ -15,7 +15,7 @@ const Dashboard = () => {
     stock: '',
     category: ''
   });
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
 
   // Función para exportar a Excel (Admin Role)
@@ -40,7 +40,7 @@ const Dashboard = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!file) {
+    if (files.length === 0) {
       return alert("Por favor, selecciona una imagen antes de publicar.");
     }
 
@@ -52,7 +52,10 @@ const Dashboard = () => {
     data.append('price', formData.price);
     data.append('stock', formData.stock);
     data.append('category', formData.category);
-    data.append('image', file);
+
+    Array.from(files).forEach((f) => {
+      data.append('image', f);
+    });
 
     try {
       // 3. Petición al Backend
@@ -62,7 +65,7 @@ const Dashboard = () => {
 
       // 4. Limpiar antes de navegar
       setFormData({ name: '', description: '', price: '', stock: '', category: '' });
-      setFile(null);
+      setFiles([]);
 
       // 5. Ahora sí funcionará porque navigate está definido
       navigate('/admin');
@@ -94,7 +97,12 @@ const Dashboard = () => {
             <input type="text" name="category" placeholder="Categoría" value={formData.category} onChange={handleChange} className="w-full p-2 border rounded-lg" required />
 
             <div className="border-2 border-dashed border-gray-200 p-4 rounded-lg text-center">
-              <input type="file" onChange={(e) => setFile(e.target.files[0])} className="text-sm" required />
+              <input type="file" onChange={(e) => setFiles(e.target.files)} className="text-sm" multiple accept="image/*" required />
+              {files.length > 0 && (
+                <p className="mt-2 text-xs text-emerald-600 font-medium">
+                  {files.length} imágenes seleccionadas
+                </p>
+              )}
             </div>
 
             <button type="submit" disabled={loading} className="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 transition disabled:opacity-50">
