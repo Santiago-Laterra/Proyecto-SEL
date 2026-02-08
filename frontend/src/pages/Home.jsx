@@ -51,7 +51,7 @@ const Home = () => {
                   <Link to={`/product/${product._id}`} className="w-full h-full block">
                     {product.image ? (
                       <img
-                        src={product.image.trim()}
+                        src={product.image[0].trim()}
                         alt={product.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         onError={(e) => {

@@ -12,12 +12,6 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 
 
-import localImg2 from '../assets/foto-calendario-2.avif';
-import localImg3 from '../assets/foto-calendario-3.avif';
-import localImg4 from '../assets/foto-calendario-4.avif';
-import localImg5 from '../assets/foto-calendario-5.webp';
-
-
 const ProductDetail = () => {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
@@ -64,7 +58,7 @@ const ProductDetail = () => {
   if (loading) return <div className="text-center py-40">Cargando producto...</div>;
   if (!product) return <div className="text-center py-40">Producto no encontrado.</div>;
 
-  const carouselImages = [product.image, localImg2, localImg3, localImg4, localImg5].filter(Boolean);
+  const carouselImages = Array.isArray(product.image) ? product.image : [product.image];
 
   return (
     <div className="min-h-screen bg-white pt-32 pb-20 px-5 md:px-[160.4px] font-proxima">
@@ -72,10 +66,14 @@ const ProductDetail = () => {
 
         {/* LADO IZQUIERDO: Carrusel */}
         <div className="w-full md:w-1/2">
-          <Swiper modules={[Navigation, Pagination]} navigation pagination={{ clickable: true }} className="rounded-lg overflow-hidden shadow-sm">
+          <Swiper modules={[Navigation, Pagination]} navigation pagination={{ clickable: true }}>
             {carouselImages.map((img, index) => (
               <SwiperSlide key={index}>
-                <img src={img} alt={`Vista ${index + 1}`} className="w-full h-auto object-cover aspect-square" />
+                <img
+                  src={img}
+                  alt={`Vista ${index}`}
+                  className="w-full h-auto object-cover aspect-square"
+                />
               </SwiperSlide>
             ))}
           </Swiper>
