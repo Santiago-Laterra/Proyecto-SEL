@@ -211,7 +211,7 @@ const AdminDashboard = () => {
                     {products.map((product) => (
                       <tr key={product._id} className="hover:bg-gray-50/50 transition-colors">
                         <td className="px-6 py-4 flex items-center gap-4">
-                          <img src={product.image} alt="" className="w-12 h-12 rounded-lg object-cover border border-gray-100" />
+                          <img src={Array.isArray(product.image) ? product.image[0] : product.image} alt="" className="w-12 h-12 rounded-lg object-cover border border-gray-100" />
                           <span className="font-medium text-slate-700">{product.name}</span>
                         </td>
                         <td className="px-6 py-4 text-slate-600 font-medium italic">
