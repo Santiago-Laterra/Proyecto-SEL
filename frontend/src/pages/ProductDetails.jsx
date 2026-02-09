@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+// 1. Agregamos 'Autoplay' a las importaciones de Swiper
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination } from 'swiper/modules';
+import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 import { Heart, Truck, MapPin } from 'lucide-react';
 import api from '../services/api';
 import { useCart } from '../context/CartContext';
@@ -10,7 +11,6 @@ import { useCart } from '../context/CartContext';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
-
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -40,13 +40,9 @@ const ProductDetail = () => {
     setCalculating(true);
     try {
       const response = await api.post('/payments/shipping/calculate', { zipCode });
-
-      // AQUÍ ESTABA EL ERROR: Usamos setGlobalZip (la del contexto)
       if (setGlobalZip) setGlobalZip(zipCode);
-
       setShippingCost(response.data.cost);
       if (updateShipping) updateShipping(response.data.cost);
-
     } catch (error) {
       console.error("Error al calcular envío:", error);
       alert("No se pudo calcular el envío.");
@@ -64,9 +60,22 @@ const ProductDetail = () => {
     <div className="min-h-screen bg-white pt-32 pb-20 px-5 md:px-[160.4px] font-proxima">
       <div className="flex flex-col md:flex-row gap-12">
 
-        {/* LADO IZQUIERDO: Carrusel */}
+        {/* LADO IZQUIERDO: Carrusel con Infinito y Autoplay */}
         <div className="w-full md:w-1/2">
-          <Swiper modules={[Navigation, Pagination]} navigation pagination={{ clickable: true }}>
+          <Swiper
+            // 2. Añadimos Autoplay a los módulos
+            modules={[Navigation, Pagination, Autoplay]}
+            navigation
+            pagination={{ clickable: true }}
+            // 3. 'loop={true}' hace que sea infinito (de la última vuelve a la primera)
+            loop={true}
+            // 4. Configuración de Autoplay
+            autoplay={{
+              delay: 3000, // Cambia cada 3 segundos
+              disableOnInteraction: false, // Sigue pasando aunque el usuario lo toque
+            }}
+            className="rounded-2xl overflow-hidden shadow-sm border border-gray-100"
+          >
             {carouselImages.map((img, index) => (
               <SwiperSlide key={index}>
                 <img
@@ -96,7 +105,7 @@ const ProductDetail = () => {
             </button>
           </div>
 
-          {/* --- BLOQUE DE ENVÍO --- */}
+          {/* Bloque de Envío */}
           <div className="bg-gray-50 p-5 rounded-xl border border-gray-100 mt-2">
             <div className="flex items-center gap-2 mb-4 text-slate-700">
               <Truck size={20} className="text-[#007f5f]" />
@@ -138,7 +147,6 @@ const ProductDetail = () => {
             <span className="underline">Añadir a la lista de deseos</span>
           </button>
 
-          {/* Descripción */}
           <div className="mt-4 border-t border-gray-100 pt-8 text-slate-600 mb-4 whitespace-pre-line text-sm">
             {product.description || "Sin descripción disponible."}
           </div>
