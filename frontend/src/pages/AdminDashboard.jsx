@@ -56,21 +56,24 @@ const AdminDashboard = () => {
   // 4. LÓGICA DE FILTRADO
   const filteredOrders = orders.filter(order => {
     if (filter === 'all') return true;
-    return order.status === filter;
+    return order.status === filter; // 'paid', 'pending', 'rejected', 'cancelled'
   });
 
   // 5. EXPORTACIÓN A EXCEL (ADAPTATIVA)
   const exportOrdersToExcel = () => {
-    if (filteredOrders.length === 0) return alert("No hay órdenes en esta categoría para exportar");
+    if (filteredOrders.length === 0) return alert("No hay órdenes para exportar");
 
     const dataToExport = filteredOrders.map(order => ({
       ID_Pedido: order._id,
       Fecha: new Date(order.createdAt).toLocaleDateString(),
       Cliente: order.user?.name || 'Invitado',
       Email: order.user?.email || 'N/A',
-      Total: order.totalAmount, // Valor real del backend
+      Total: order.totalAmount,
       Envio: order.shippingCost,
-      Estado: order.status === 'paid' ? 'PAGADO' : 'PENDIENTE',
+      // Mapeo amigable para el Excel
+      Estado: order.status === 'paid' ? 'PAGADO' :
+        order.status === 'pending' ? 'PENDIENTE' :
+          order.status === 'rejected' ? 'RECHAZADO' : 'CANCELADO',
       Direccion: `${order.shippingAddress?.street} ${order.shippingAddress?.number}, ${order.shippingAddress?.city}`
     }));
 
@@ -78,7 +81,7 @@ const AdminDashboard = () => {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Ventas SeloYah");
 
-    const fileName = `Ventas_SeloYah_${filter.toUpperCase()}_${new Date().toLocaleDateString()}.xlsx`;
+    const fileName = `Reporte_Ventas_${filter.toUpperCase()}_${new Date().toLocaleDateString()}.xlsx`;
     XLSX.writeFile(workbook, fileName);
   };
 
@@ -198,24 +201,30 @@ const AdminDashboard = () => {
 
           {/* Filtros de Estado (Solo visibles en Ventas) */}
           {activeTab === 'orders' && (
-            <div className="flex gap-4 p-6 bg-gray-50/50 border-b border-gray-100">
+            <div className="flex flex-wrap gap-3 p-6 bg-gray-50/50 border-b border-gray-100">
               <button
                 onClick={() => setFilter('all')}
-                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${filter === 'all' ? 'bg-slate-800 text-white shadow-sm' : 'bg-white text-slate-500 border border-gray-200 hover:bg-gray-100'}`}
+                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${filter === 'all' ? 'bg-slate-800 text-white' : 'bg-white text-slate-500 border border-gray-200'}`}
               >
                 Todas ({orders.length})
               </button>
               <button
                 onClick={() => setFilter('paid')}
-                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${filter === 'paid' ? 'bg-[#007f5f] text-white shadow-sm' : 'bg-white text-slate-500 border border-gray-200 hover:bg-gray-100'}`}
+                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${filter === 'paid' ? 'bg-[#007f5f] text-white' : 'bg-white text-slate-500 border border-gray-200'}`}
               >
                 Pagadas ({orders.filter(o => o.status === 'paid').length})
               </button>
               <button
                 onClick={() => setFilter('pending')}
-                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${filter === 'pending' ? 'bg-stone-900 text-white shadow-sm' : 'bg-white text-slate-500 border border-gray-200 hover:bg-gray-100'}`}
+                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${filter === 'pending' ? 'bg-amber-500 text-white' : 'bg-white text-slate-500 border border-gray-200'}`}
               >
                 Pendientes ({orders.filter(o => o.status === 'pending').length})
+              </button>
+              <button
+                onClick={() => setFilter('rejected')}
+                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${filter === 'rejected' ? 'bg-red-600 text-white' : 'bg-white text-slate-500 border border-gray-200'}`}
+              >
+                Rechazadas/Fallas ({orders.filter(o => o.status === 'rejected' || o.status === 'cancelled').length})
               </button>
             </div>
           )}
@@ -275,8 +284,13 @@ const AdminDashboard = () => {
                             ${order.totalAmount.toLocaleString('es-AR')}
                           </td>
                           <td className="px-6 py-4">
-                            <span className={`px-2 py-1 rounded-full text-[10px] font-bold tracking-wider ${order.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                              {order.status === 'paid' ? 'PAGADO' : 'PENDIENTE'}
+                            <span className={`px-2 py-1 rounded-full text-[10px] font-bold tracking-wider ${order.status === 'paid' ? 'bg-green-100 text-green-700' :
+                              order.status === 'pending' ? 'bg-amber-100 text-amber-700' :
+                                'bg-red-100 text-red-700'
+                              }`}>
+                              {order.status === 'paid' ? 'PAGADO' :
+                                order.status === 'pending' ? 'PENDIENTE' :
+                                  order.status === 'rejected' ? 'FALLIDO' : 'CANCELADO'}
                             </span>
                           </td>
                           <td className="px-6 py-4 text-sm text-slate-500">

@@ -1,6 +1,5 @@
 import { Request, Response } from 'express'; // <--- Faltaba esta línea
 import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
-import { Product } from '../model/productModel';
 import { Order } from '../model/orderModel';
 
 
@@ -11,72 +10,66 @@ const client = new MercadoPagoConfig({
 
 export const createPreference = async (req: Request, res: Response) => {
   try {
-    // 1. Extraemos los datos del body (incluyendo dirección y userId)
     const { items, shippingAddress, shippingCost, userId } = req.body;
 
-    // 2. Calculamos el monto total para guardarlo en nuestra DB
     const itemsTotal = items.reduce((acc: number, item: any) => acc + (item.unit_price * item.quantity), 0);
     const totalAmount = itemsTotal + (Number(shippingCost) || 0);
 
-    // 3. CREAMOS LA ORDEN EN MONGODB (Estado inicial: pending)
-    // Esto es lo que después verá la admin en su dashboard y exportará a Excel
+    // 1. CREAMOS LA ORDEN EN MONGODB (Estado inicial: pending)
     const newOrder = new Order({
       user: userId,
       items: items,
-      shippingAddress: shippingAddress, // Calle, número, localidad, etc.
+      shippingAddress: shippingAddress,
       shippingCost: Number(shippingCost) || 0,
       totalAmount: totalAmount,
-      status: 'pending'
+      status: 'pending' // Estado por defecto para el Admin
     });
 
     const savedOrder = await newOrder.save();
 
-    // 4. PREPARAMOS LOS ITEMS PARA MERCADO PAGO
+    // 2. PREPARAMOS LOS ITEMS
     const preference = new Preference(client);
-    const allItems = [...items]; // Spread operator para copiar items
+    const allItems = [...items];
 
-    // Sumamos el envío como un item más para que MP lo cobre
     if (shippingCost && shippingCost > 0) {
       allItems.push({
-        title: "Costo de Envío (Logística SeloYah)",
+        title: "Costo de Envío",
         quantity: 1,
         unit_price: Number(shippingCost),
         currency_id: "ARS"
       });
     }
 
-    // 5. CREAMOS LA PREFERENCIA EN MERCADO PAGO
+    // 3. CREAMOS LA PREFERENCIA CON FILTRADO DE RETORNO
     const result = await preference.create({
       body: {
         items: allItems,
-        // IMPORTANTE: Guardamos el ID de la ORDEN, no del producto
         external_reference: savedOrder._id.toString(),
         back_urls: {
-          success: "https://www.google.com",
-          failure: "https://www.google.com",
-          pending: "https://www.google.com"
+          // ASEGÚRATE de que estas URLs existan en tu RouterApp.jsx
+          success: "http://localhost:5173/pago-exitoso",
+          failure: "http://localhost:5173/carrito",
+          pending: "http://localhost:5173/pago-pendiente"
+
         },
-        auto_return: "approved"
+        // Cambia "approved" por "all" para mayor compatibilidad en desarrollo
+        auto_return: "approved",
       }
     });
 
-    // 6. ACTUALIZAMOS LA ORDEN CON EL ID DE PREFERENCIA (Opcional, pero útil)
-    savedOrder.mpPreferenceId = result.id!
+    // 4. GUARDAMOS EL ID DE PREFERENCIA
+    savedOrder.mpPreferenceId = result.id!;
     await savedOrder.save();
 
-    // 7. RESPONDEMOS AL FRONTEND
     res.status(200).json({
       id: result.id,
       init_point: result.init_point,
-      orderId: savedOrder._id // Para que el front sepa qué orden se generó
+      orderId: savedOrder._id
     });
 
   } catch (error: any) {
     console.error("Error al crear preferencia/orden:", error.message || error);
-    res.status(500).json({
-      message: "Error al procesar la compra",
-      error: error.message
-    });
+    res.status(500).json({ message: "Error al procesar la compra", error: error.message });
   }
 };
 
@@ -85,34 +78,37 @@ export const receiveWebhook = async (req: Request, res: Response) => {
   try {
     const { query } = req;
 
-    // Verificamos que sea una notificación de pago
     if (query.type === "payment") {
       const paymentId = query['data.id'] as string;
-
-      // 1. Consultamos el estado del pago a Mercado Pago
       const payment = await new Payment(client).get({ id: paymentId });
 
-      if (payment.status === "approved") {
-        // 2. Recuperamos el ID de la ORDEN (que guardamos en external_reference)
-        const orderId = payment.external_reference;
+      const orderId = payment.external_reference;
+      const status = payment.status;
 
-        console.log(`Pago aprobado para la orden: ${orderId}`);
+      console.log(`Estado recibido de MP: ${status} para la orden: ${orderId}`);
 
-        // 3. ACTUALIZAMOS LA ORDEN EN MONGODB
-        // Cambiamos el estado de 'pending' a 'paid'
-        await Order.findByIdAndUpdate(orderId, { status: 'paid' });
+      // 🛡️ FILTRO PROFESIONAL: Solo aceptamos estos dos estados
+      if (status === "approved" || status === "pending" || status === "in_process") {
 
-        console.log(`Orden ${orderId} marcada como PAGADA con éxito.`);
+        // Mapeamos el status de MP a tu sistema de Admin
+        const dbStatus = (status === "approved") ? 'paid' : 'pending';
 
-        /* Opcional: Si además quieres descontar stock de los productos 
-           dentro de esa orden, podrías hacerlo aquí recorriendo 
-           order.items, pero con marcar la orden como pagada ya 
-           tienes lo principal para el Admin.
-        */
+        await Order.findByIdAndUpdate(orderId, {
+          status: dbStatus,
+          paymentId: paymentId // Guardamos el ID de pago por si el admin tiene que rastrear en MP
+        });
+
+        console.log(`Orden ${orderId} actualizada a: ${dbStatus}`);
+      } else {
+        // 🗑️ SI ES CANCELADO O RECHAZADO: 
+        // No la actualizamos o podrías incluso borrarla si quieres limpiar la DB
+        console.log(`El pago de la orden ${orderId} fue ${status}. No se marca como pagada.`);
+
+        // OPCIONAL: Si quieres borrar la orden fallida para que no moleste al Admin
+        // await Order.findByIdAndDelete(orderId);
       }
     }
 
-    // Siempre respondemos 200 a Mercado Pago para que no reintente el envío
     res.sendStatus(200);
 
   } catch (error: any) {

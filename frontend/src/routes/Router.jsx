@@ -1,14 +1,16 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Header from '../pages/Header';
 import Home from '../pages/Home';
-import Login from '../pages/Login';
+import Login from '../pages/Login'; // Agregado
+import Register from '../pages/Register'; // Corregido el path
 import ProtectedRoute from '../components/ProtectedRoute';
 import Footer from '../pages/Footer';
-import ProductDetail from '../pages/ProductDetails';
-import AdminDashboard from '../pages/AdminDashboard'; // Este es el que terminamos recién
+import AdminDashboard from '../pages/AdminDashboard';
 import Dashboard from '../pages/Dashboard';
-import Register from '../pages/Register';
-import Contact from '../components/Contact';
+import PaymentSuccess from '../pages/PaymentSuccess';
+import PaymentPending from '../pages/PaymentPending';
+import ProductDetails from '../pages/ProductDetails';
+import Contact from '../components/Contact'; // Agregado
 
 const RouterApp = () => {
   return (
@@ -19,15 +21,19 @@ const RouterApp = () => {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/product/:id" element={<ProductDetails />} />
 
-        {/* 🔒 BLOQUE PROTEGIDO */}
+        {/* Rutas de Mercado Pago */}
+        <Route path="/pago-exitoso" element={<PaymentSuccess />} />
+        <Route path="/pago-pendiente" element={<PaymentPending />} />
+        <Route path="/carrito" element={<Home />} />
+
+        {/* Bloque protegido Admin */}
         <Route element={<ProtectedRoute />}>
-          {/* La tabla principal del admin */}
+          {/* Aquí es donde gestionas las ventas y exportas a Excel */}
           <Route path="/admin" element={<AdminDashboard />} />
-
-          {/* El formulario para cargar productos nuevos */}
+          {/* Aquí es donde cargas los productos nuevos */}
           <Route path="/dashboard" element={<Dashboard />} />
         </Route>
       </Routes>

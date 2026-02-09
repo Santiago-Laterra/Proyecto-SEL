@@ -5,7 +5,7 @@ import { authMiddleware } from '../middleware/authMiddleware';
 const router = Router();
 
 // Protegemos la ruta: solo usuarios logueados pueden generar pagos
-router.post('/create-preference', authMiddleware, createPreference);
+router.post('/create-preference', createPreference);
 
 // Ruta para el cálculo de envío
 router.post('/shipping/calculate', (req, res) => {

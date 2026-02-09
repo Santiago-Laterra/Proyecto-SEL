@@ -99,9 +99,14 @@ const CartDrawer = ({ isOpen, onClose }) => {
           {cart.length === 0 ? (
             <p className="text-center text-gray-500 mt-10 text-sm">Aún no se han añadido artículos al carrito</p>
           ) : (
-            cart.map((item) => (
+            cart.map((item) => ( // <--- Aquí definiste 'item'
               <div key={item._id} className="flex gap-4 border-b border-gray-50 pb-4">
-                <img src={item.image} alt={item.name} className="w-20 h-20 object-cover rounded-md" />
+                <img
+                  // CAMBIO: Usar 'item' en lugar de 'product'
+                  src={Array.isArray(item.image) ? item.image[0] : (item.image || "/placeholder.png")}
+                  alt={item.name}
+                  className="w-20 h-20 object-cover rounded-lg"
+                />
                 <div className="flex-1">
                   <h3 className="text-sm font-medium text-slate-800 leading-snug">{item.name}</h3>
                   <p className="text-sm font-bold mt-1">
