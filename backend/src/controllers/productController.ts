@@ -14,14 +14,14 @@ const getProducts = async (req: Request, res: Response) => {
 
 const addProduct = async (req: any, res: any) => {
   try {
-    // 1. Convertir strings a números para que Zod no se queje
+    const images = req.files as Express.Multer.File[];
+
     const dataToValidate = {
       ...req.body,
       price: Number(req.body.price),
       stock: Number(req.body.stock),
     };
 
-    // 2. Validar con Zod
     const validation = productSchema.safeParse(dataToValidate);
 
     if (!validation.success) {
@@ -32,33 +32,43 @@ const addProduct = async (req: any, res: any) => {
       });
     }
 
-    // 3. Verificar imagen
-    if (!req.file) {
-      return res.status(400).json({ message: "La imagen es obligatoria" });
+    if (!images || images.length === 0) {
+      return res.status(400).json({ message: "Al menos una imagen es obligatoria" });
     }
 
-    // 4. Subir a Cloudinary (Esto ya te da la URL limpia)
-    const result: any = await uploadToCloudinary(req.file.buffer);
-    const imageUrl = result.secure_url;
+    // --- CORRECCIÓN AQUÍ ---
+    // 5. Subir imágenes secuencialmente para respetar el orden del Admin
+    const imageUrls: string[] = []; // Array nuevo para las URLs limpias
 
-    // 5. Crear el producto usando los datos LIMPIOS de Zod
+    const sortedImages = images.sort((a, b) => a.originalname.localeCompare(b.originalname));
+
+    for (const file of sortedImages) {
+      const result: any = await uploadToCloudinary(file.buffer);
+      imageUrls.push(result.secure_url);
+    }
+    // -----------------------
+
+    // 6. Crear el producto usando el nuevo array de URLs
     const newProduct = new Product({
-      // USAMOS validation.data en lugar de req.body
-      // Esto asegura que price sea número y los strings estén trimeados si tu schema lo hace
       ...validation.data,
-      image: imageUrl // La URL segura de Cloudinary sin espacios
+      image: imageUrls // Ahora sí, solo URLs y en orden
     });
 
     await newProduct.save();
 
     res.status(201).json({
-      message: "Producto creado con éxito en SeloYah",
+      success: true,
+      message: "Producto creado con éxito en Soleyah",
       product: newProduct
     });
 
   } catch (error: any) {
     console.error("Error en addProduct:", error);
-    res.status(500).json({ message: "Error al crear el producto", error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Error al crear el producto",
+      error: error.message
+    });
   }
 };
 

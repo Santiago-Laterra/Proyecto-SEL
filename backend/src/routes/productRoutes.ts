@@ -22,7 +22,7 @@ router.delete('/:id', authMiddleware, isAdmin, deleteProduct);
 
 
 // Lo aplicas solo en la ruta de creación (POST)
-router.post("/", authMiddleware, isAdmin, upload.single("image"), addProduct);
+router.post("/add", upload.array('image', 5), addProduct);
 
 router.get('/:id', getProductById);
 

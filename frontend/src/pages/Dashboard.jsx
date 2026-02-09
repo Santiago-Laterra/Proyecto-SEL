@@ -59,7 +59,7 @@ const Dashboard = () => {
 
     try {
       // 3. Petición al Backend
-      await api.post('/products', data);
+      await api.post('/products/add', data);
 
       alert("¡Producto cargado con éxito!");
 
