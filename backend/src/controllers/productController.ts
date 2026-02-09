@@ -40,9 +40,7 @@ const addProduct = async (req: any, res: any) => {
     // 5. Subir imágenes secuencialmente para respetar el orden del Admin
     const imageUrls: string[] = []; // Array nuevo para las URLs limpias
 
-    const sortedImages = images.sort((a, b) => a.originalname.localeCompare(b.originalname));
-
-    for (const file of sortedImages) {
+    for (const file of images) { // El orden lo determina el orden de llegada
       const result: any = await uploadToCloudinary(file.buffer);
       imageUrls.push(result.secure_url);
     }
