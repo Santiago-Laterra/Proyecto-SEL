@@ -17,7 +17,14 @@ const AdminDashboard = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [editName, setEditName] = useState("");
   const [editPrice, setEditPrice] = useState("");
+  const [editDescription, setEditDescription] = useState("");
   const [editStock, setEditStock] = useState("");
+  const [editImages, setEditImages] = useState([]); // URLs existentes
+  const [newFiles, setNewFiles] = useState([]);
+
+
+
+
 
   useEffect(() => {
     fetchProducts();
@@ -81,20 +88,38 @@ const AdminDashboard = () => {
     setEditName(product.name);
     setEditPrice(product.price);
     setEditStock(product.stock || 0);
+    setEditDescription(product.description || "");
+    setEditImages(Array.isArray(product.image) ? product.image : [product.image]);
+    setNewFiles([]); // Reset de archivos nuevos
   };
 
   const handleUpdate = async () => {
     try {
+      setLoading(true);
+      const data = new FormData();
+      data.append('name', editName);
+      data.append('price', editPrice);
+      data.append('stock', editStock);
+      data.append('description', editDescription);
+
+      // Mandamos las fotos que el admin decidió conservar
+      data.append('existingImages', JSON.stringify(editImages));
+
+      // Mandamos las fotos nuevas si las hay
+      newFiles.forEach(file => data.append('image', file));
+
       const token = localStorage.getItem('token');
-      await api.put(`/products/${editingProduct._id}`,
-        { name: editName, price: Number(editPrice), stock: Number(editStock) },
-        { headers: { 'Authorization': `Bearer ${token}` } }
-      );
+      await api.put(`/products/${editingProduct._id}`, data, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
       setEditingProduct(null);
       fetchProducts();
-      alert("Producto actualizado correctamente ✨");
+      alert("¡Producto actualizado con éxito! 🚀");
     } catch (error) {
-      alert("Error al actualizar el producto");
+      alert("Error al actualizar");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -285,27 +310,89 @@ const AdminDashboard = () => {
 
       {/* --- MODAL DE EDICIÓN --- */}
       {editingProduct && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-200 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl relative" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setEditingProduct(null)} className="absolute top-4 right-4 text-gray-400 hover:text-slate-800 transition-colors"><X size={24} /></button>
-            <h2 className="text-2xl font-serif mb-6 text-slate-800">Editar Producto</h2>
-            <div className="space-y-5">
-              <div>
-                <label className="text-xs font-bold text-slate-400 uppercase ml-1">Nombre del producto</label>
-                <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full border-b-2 py-2 outline-none focus:border-emerald-500 transition-colors bg-transparent" />
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-999 flex items-center justify-center p-4">
+          <div
+            className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header Fijo */}
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white">
+              <h2 className="text-2xl font-serif text-slate-800">Editar Producto</h2>
+              <button onClick={() => setEditingProduct(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400">
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Contenido con Scroll Propio */}
+            <div className="p-8 overflow-y-auto space-y-6 custom-scrollbar">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Nombre</label>
+                  <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full border-b-2 py-2 outline-none focus:border-emerald-500 transition-colors bg-transparent text-slate-700 font-medium" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Precio</label>
+                    <input type="number" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} className="w-full border-b-2 py-2 outline-none focus:border-emerald-500 transition-colors bg-transparent" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Stock</label>
+                    <input type="number" value={editStock} onChange={(e) => setEditStock(e.target.value)} className="w-full border-b-2 py-2 outline-none focus:border-emerald-500 transition-colors bg-transparent" />
+                  </div>
+                </div>
               </div>
+
               <div>
-                <label className="text-xs font-bold text-slate-400 uppercase ml-1">Precio (ARS)</label>
-                <input type="number" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} className="w-full border-b-2 py-2 outline-none focus:border-emerald-500 transition-colors bg-transparent" />
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Descripción</label>
+                <textarea
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  className="w-full border-2 border-gray-100 rounded-xl p-3 mt-2 outline-none focus:border-emerald-500 h-28 resize-none text-sm text-slate-600 leading-relaxed"
+                  placeholder="Escribí una descripción matadora..."
+                />
               </div>
+
               <div>
-                <label className="text-xs font-bold text-slate-400 uppercase ml-1">Stock disponible</label>
-                <input type="number" value={editStock} onChange={(e) => setEditStock(e.target.value)} className="w-full border-b-2 py-2 outline-none focus:border-emerald-500 transition-colors bg-transparent" />
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Galería de Imágenes</label>
+                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3 mt-3">
+                  {editImages.map((img, idx) => (
+                    <div key={idx} className="relative aspect-square group">
+                      <img src={img} className="w-full h-full object-cover rounded-xl border border-gray-100 shadow-sm" />
+                      <button
+                        onClick={() => setEditImages(editImages.filter((_, i) => i !== idx))}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                  <label className="aspect-square border-2 border-dashed border-gray-200 flex flex-col items-center justify-center rounded-xl cursor-pointer hover:bg-emerald-50 hover:border-emerald-200 transition-all text-gray-400 hover:text-emerald-500">
+                    <Plus size={24} />
+                    <span className="text-[9px] font-bold uppercase mt-1">Subir</span>
+                    <input type="file" className="hidden" multiple onChange={(e) => setNewFiles([...newFiles, ...e.target.files])} />
+                  </label>
+                </div>
+                {newFiles.length > 0 && (
+                  <div className="mt-3 flex items-center gap-2 text-emerald-600 bg-emerald-50 w-fit px-3 py-1 rounded-full text-[10px] font-bold">
+                    <RefreshCw size={12} className="animate-spin" />
+                    {newFiles.length} FOTOS NUEVAS LISTAS
+                  </div>
+                )}
               </div>
             </div>
-            <div className="flex gap-3 mt-10">
-              <button onClick={() => setEditingProduct(null)} className="flex-1 py-3 text-slate-500 font-semibold hover:bg-gray-50 rounded-xl transition-colors">Cancelar</button>
-              <button onClick={handleUpdate} className="flex-1 py-3 bg-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all active:scale-[0.98]">Guardar Cambios</button>
+
+            {/* Footer Fijo */}
+            <div className="p-6 border-t border-gray-50 bg-gray-50/50 flex gap-3">
+              <button onClick={() => setEditingProduct(null)} className="flex-1 py-3 text-slate-500 font-bold hover:bg-gray-100 rounded-xl transition-colors">
+                Descartar
+              </button>
+              <button
+                onClick={handleUpdate}
+                disabled={loading}
+                className="flex-1 py-3 bg-slate-800 text-white font-bold rounded-xl shadow-xl hover:bg-slate-700 transition-all active:scale-95 disabled:opacity-50"
+              >
+                {loading ? 'Guardando...' : 'Actualizar Producto'}
+              </button>
             </div>
           </div>
         </div>

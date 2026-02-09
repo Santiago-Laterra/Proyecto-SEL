@@ -17,7 +17,7 @@ router.get('/orders', authMiddleware, isAdmin, getAllOrders);
 router.delete('/orders/:id', authMiddleware, isAdmin, deleteOrder);
 
 // Rutas protegidas: Solo el Admin con un Token válido puede entrar
-router.put('/:id', authMiddleware, isAdmin, updateProduct);
+router.put('/:id', authMiddleware, isAdmin, upload.array('image', 5), updateProduct);
 router.delete('/:id', authMiddleware, isAdmin, deleteProduct);
 
 

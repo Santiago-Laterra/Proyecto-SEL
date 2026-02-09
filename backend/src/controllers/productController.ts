@@ -70,14 +70,41 @@ const addProduct = async (req: any, res: any) => {
   }
 };
 
-const updateProduct = async (req: Request, res: Response) => {
+const updateProduct = async (req: any, res: any) => {
   try {
     const { id } = req.params;
-    const updatedProduct = await Product.findByIdAndUpdate(id, req.body, { new: true });
-    if (!updatedProduct) return res.status(404).json({ message: "Producto no encontrado" });
-    res.status(200).json({ message: "Producto actualizado", updatedProduct });
-  } catch (error) {
-    res.status(500).json({ message: "Error al actualizar", error });
+
+    // Si req.body es undefined aquí, es culpa de la ruta (paso 2)
+    const { name, price, stock, description, existingImages } = req.body;
+    const files = req.files as Express.Multer.File[];
+
+    // Parseamos las imágenes que el admin decidió conservar
+    let updatedImages: string[] = JSON.parse(existingImages || "[]");
+
+    // Si hay fotos nuevas, las subimos
+    if (files && files.length > 0) {
+      for (const file of files) {
+        const result: any = await uploadToCloudinary(file.buffer);
+        updatedImages.push(result.secure_url);
+      }
+    }
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      id,
+      {
+        name,
+        price: Number(price),
+        stock: Number(stock),
+        description,
+        image: updatedImages
+      },
+      { new: true }
+    );
+
+    res.json({ success: true, product: updatedProduct });
+  } catch (error: any) {
+    console.error(error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
