@@ -37,7 +37,7 @@ export const createPreference = async (req: Request, res: Response) => {
     const allItems = items.map((item: any) => ({
       id: item.id,
       title: item.title,
-      unit_price: 1,
+      unit_price: Number(item.unit_price),
       quantity: Number(item.quantity),
       currency_id: "ARS"
     }));

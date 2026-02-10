@@ -17,23 +17,84 @@ const CONSUMO_KM_POR_LITRO = 10;
 const COSTO_FIJO_BASE = 500;
 
 const DISTANCIAS_KM = {
-  // GBA SUR
-  "1828": 0,  // Lomas de Zamora (Centro)
-  "1834": 15, // Temperley
-  "1832": 13, // Banfield
-  "1846": 18, // Adrogué
+  // --- CABA ---
+  "Villa Lugano": 1,
+  "Nueva Pompeya": 6,
+  "Parque Patricios": 8,
+  "Floresta": 7,
+  "Parque Avellaneda": 4,
+  "Flores": 6,
+  "Liniers": 7,
+  "Parque Chacabuco": 7,
+  "Caballito": 9,
+  "Boedo": 10,
+  "Almagro": 11,
+  "Villa Crespo": 12,
+  "Villa General Mitre": 9,
+  "Villa del Parque": 11,
+  "Villa Devoto": 13,
+  "Villa Urquiza": 16,
+  "Villa Pueyrredón": 15,
+  "Saavedra": 18,
+  "Núñez": 20,
+  "Belgrano": 18,
+  "Colegiales": 16,
+  "Palermo": 15,
+  "San Cristóbal": 11,
+  "Constitución": 12,
+  "San Telmo": 13,
+  "Monserrat": 13,
+  "San Nicolás": 14,
+
+  // --- GBA SUR ---
+  "Gerli": 10,
+  "Lanús": 11,
+  "Remedios de Escalada": 13,
+  "Banfield": 15,
+  "Lomas de Zamora": 17,
+  "Temperley": 19,
+  "Turdera": 20,
+  "Llavallol": 22,
+  "Adrogué": 23,
+  "Luis Guillón": 24,
+  "Monte Grande": 26,
+  "Avellaneda Centro": 12,
+
+  // Default para lugares no mapeados
+  "DEFAULT": 25
+};
+// Mapeo de Códigos Postales a Localidades para que el cálculo sea igual
+const CP_A_LOCALIDAD = {
   // CABA
-  "1439": 2,  // Villa Lugano
-  "1406": 8,  // Flores
-  "1407": 8,  // Floresta
-  "1411": 11, // Caballito
-  "1425": 18, // Palermo
-  "1429": 22, // Núñez
-  "1157": 14, // La Boca
-  "1001": 18, // Retiro
-  "1426": 20, // Belgrano
-  "1419": 15, // Villa Pueyrredón
-  "DEFAULT": 25 // Cualquier otro CP
+  "1439": "Villa Lugano",
+  "1437": "Nueva Pompeya",
+  "1407": "Floresta",
+  "1406": "Flores",
+  "1408": "Liniers",
+  "1405": "Caballito",
+  "1218": "Boedo",
+  "1173": "Almagro",
+  "1414": "Villa Crespo",
+  "1417": "Villa del Parque",
+  "1419": "Villa Devoto",
+  "1431": "Villa Urquiza",
+  "1430": "Saavedra",
+  "1429": "Núñez",
+  "1428": "Belgrano",
+  "1425": "Palermo",
+  "1133": "San Telmo",
+  "1001": "San Nicolás",
+
+  // GBA SUR
+  "1824": "Lanús",
+  "1826": "Remedios de Escalada",
+  "1828": "Banfield",
+  "1832": "Lomas de Zamora",
+  "1834": "Temperley",
+  "1836": "Llavallol",
+  "1842": "Monte Grande",
+  "1870": "Avellaneda Centro",
+  "1846": "Adrogué"
 };
 
 const ProductDetails = () => {
@@ -63,33 +124,42 @@ const ProductDetails = () => {
   }, [id]);
 
   // 2. Limpiar envío previo al entrar a un nuevo producto
-  useEffect(() => {
-    clearShipping();
-  }, [clearShipping]);
+  //useEffect(() => {
+  //  clearShipping();
+  //}, [clearShipping]);
 
   // 3. LÓGICA DE CÁLCULO LOCAL (Eliminada la API)
+  // 3. LÓGICA DE CÁLCULO LOCAL (Actualizada para usar el mapa de localidades)
   const handleCalculateShipping = () => {
     if (zipCode.length < 4) return alert("Por favor, ingresá un código postal válido");
 
     setCalculating(true);
 
-    // Simulamos un delay de "procesamiento" para mejorar la UX
     setTimeout(() => {
-      const km = DISTANCIAS_KM[zipCode] !== undefined ? DISTANCIAS_KM[zipCode] : DISTANCIAS_KM["DEFAULT"];
+      // 1. Traducimos el CP a Nombre de Localidad (ej: "1439" -> "Villa Lugano")
+      const nombreLocalidad = CP_A_LOCALIDAD[zipCode];
+
+      // 2. Buscamos los KM usando el nombre obtenido, o el DEFAULT si no existe
+      const km = DISTANCIAS_KM[nombreLocalidad] !== undefined
+        ? DISTANCIAS_KM[nombreLocalidad]
+        : DISTANCIAS_KM["DEFAULT"];
 
       let costoFinal = 0;
 
       if (km > 0) {
         const costoCombustible = (km / CONSUMO_KM_POR_LITRO) * PRECIO_LITRO_NAFTA;
         costoFinal = Math.round(costoCombustible + COSTO_FIJO_BASE);
-      } else {
-        // Si km es 0 (Lomas de Zamora), el envío es gratis
+      } else if (nombreLocalidad === "Lomas de Zamora") {
+        // Solo es gratis si explícitamente es Lomas
         costoFinal = 0;
+      } else {
+        // Por las dudas, si no es Lomas y km es 0, aplicamos el base
+        costoFinal = COSTO_FIJO_BASE;
       }
 
       setShippingCost(costoFinal);
 
-      // Sincronizamos con el carrito global
+      // Sincronizamos con el carrito global (Esto es lo que lee el CartDrawer)
       if (setGlobalZip) setGlobalZip(zipCode);
       if (updateShipping) updateShipping(costoFinal);
 
@@ -182,7 +252,7 @@ const ProductDetails = () => {
               <div className="mt-4 p-3 bg-white rounded-lg border border-emerald-100 flex justify-between items-center animate-in fade-in slide-in-from-top-2">
                 <span className="text-sm text-slate-600">Costo de envío:</span>
                 <span className="font-bold text-emerald-700">
-                  {shippingCost === 0 ? "¡Gratis en Lomas!" : `$ ${shippingCost.toLocaleString('es-AR')}`}
+                  {shippingCost === 0 ? "¡Envio sin cargo!" : `$ ${shippingCost.toLocaleString('es-AR')}`}
                 </span>
               </div>
             )}
