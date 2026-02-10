@@ -98,7 +98,18 @@ const Dashboard = () => {
               </div>
               <div className="flex-1">
                 <label className="text-xs text-gray-500 ml-2">Stock disponible</label>
-                <input type="number" name="stock" value={formData.stock} onChange={handleChange} className="w-full p-3 border rounded-xl" required />
+                <input
+                  type="number"
+                  min="0" // El stock mínimo es 0
+                  placeholder="Cantidad disponible"
+                  onKeyDown={(e) => { if (e.key === '-' || e.key === 'e') e.preventDefault(); }}
+                  className="tu-clase-de-input"
+                  value={productData.stock}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    setProductData({ ...productData, stock: val < 0 ? 0 : val });
+                  }}
+                />
               </div>
             </div>
 

@@ -10,14 +10,33 @@ const CartDrawer = ({ isOpen, onClose }) => {
   const { cart, removeFromCart, cartTotal, shippingCost, zipCode } = useCart();
   const [loading, setLoading] = useState(false);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [address, setAddress] = useState({
     street: '',
     number: '',
-    city: ''
+    city: 'Lomas de Zamora', // Ciudad por defecto
+    type: 'casa',           // 'casa' o 'depto'
+    floor: '',
+    apartment: ''
   });
 
   // --- FUNCIONES ---
+  const localidadesCABA = [
+    "Agronomía", "Almagro", "Balvanera", "Barracas", "Belgrano", "Boedo", "Caballito",
+    "Chacarita", "Coghlan", "Colegiales", "Constitución", "Flores", "Floresta",
+    "La Boca", "La Paternal", "Liniers", "Mataderos", "Monte Castro", "Monserrat",
+    "Nueva Pompeya", "Núñez", "Palermo", "Parque Avellaneda", "Parque Chacabuco",
+    "Parque Chas", "Parque Patricios", "Puerto Madero", "Recoleta", "Retiro",
+    "Saavedra", "San Cristóbal", "San Nicolás", "San Telmo", "Vélez Sársfield",
+    "Versalles", "Villa Crespo", "Villa del Parque", "Villa Devoto", "Villa General Mitre",
+    "Villa Lugano", "Villa Luro", "Villa Ortúzar", "Villa Pueyrredón", "Villa Real",
+    "Villa Riachuelo", "Villa Santa Rita", "Villa Soldati", "Villa Urquiza"
+  ];
 
+  const filteredLocalidades = localidadesCABA.filter(loc =>
+    loc.toLowerCase().includes(searchTerm.toLowerCase())
+  );
   // 1. Paso previo: Valida carrito/sesión y abre el modal
   const preCheckout = () => {
     if (cart.length === 0) return;
@@ -35,14 +54,15 @@ const CartDrawer = ({ isOpen, onClose }) => {
   const handleConfirmPurchase = async (e) => {
     e.preventDefault();
 
-    // 1. DEBUG: Ver qué tenemos antes de empezar
-    console.log("--- Iniciando Proceso de Pago ---");
-    console.log("Estado actual - zipCode:", zipCode);
-    console.log("Estado actual - shippingCost:", shippingCost);
-    console.log("Estado actual - address:", address);
-
+    // --- 1. VALIDACIONES PREVIAS ---
     if (!zipCode || !shippingCost) {
-      alert("Faltan datos de envío (Código Postal o Costo).");
+      alert("Por favor, calculá el envío antes de continuar.");
+      return;
+    }
+
+    // Validación básica de campos obligatorios del modal
+    if (!address.street || !address.number || !address.city) {
+      alert("Por favor, completá los datos de la calle, número y localidad.");
       return;
     }
 
@@ -51,64 +71,74 @@ const CartDrawer = ({ isOpen, onClose }) => {
     try {
       const userRaw = localStorage.getItem('user');
       if (!userRaw) {
-        alert("No se encontró sesión de usuario. Por favor, inicia sesión.");
+        alert("No se encontró sesión de usuario. Por favor, iniciá sesión.");
         return;
       }
-
       const userData = JSON.parse(userRaw);
 
-      // 2. VALIDACIÓN DE ITEMS
       if (cart.length === 0) {
         alert("El carrito está vacío.");
         return;
       }
 
+      // --- 2. SANITIZACIÓN DE DATOS (Nivel Admin) ---
+      // Función para poner la primera en mayúscula (ej: "rivadavia" -> "Rivadavia")
+      const capitalize = (text) =>
+        text.trim().toLowerCase().replace(/\b\w/g, (l) => l.toUpperCase());
+
+      const streetClean = capitalize(address.street);
+      const cityClean = address.city; // Ya viene del select
+
+      // Construimos la dirección detallada para el Excel
+      let detailInfo = "";
+      if (address.type === 'depto') {
+        detailInfo = ` - Piso: ${address.floor} Dpto: ${address.apartment.toUpperCase()}`;
+      }
+
+      // Esta es la cadena final que verá el Admin en el reporte
+      const fullAddressString = `${streetClean} ${address.number}${detailInfo}, ${cityClean}`;
+
+      // --- 3. CONSTRUCCIÓN DEL PAYLOAD ---
       const payload = {
-        items: cart.map(product => {
-          // Validamos que cada producto tenga lo necesario
-          if (!product.price || !product.name) {
-            console.error("Producto con datos incompletos:", product);
-          }
-          return {
-            id: product._id,
-            title: product.name,
-            unit_price: Math.round(Number(product.price)),
-            quantity: 1,
-            currency_id: "ARS"
-          };
-        }),
-        userId: userData.id || userData._id, // Algunos usan id y otros _id
+        items: cart.map(product => ({
+          id: product._id,
+          title: product.name,
+          // Usamos Math.round para evitar decimales extraños en MP
+          unit_price: Math.round(Number(product.price)),
+          quantity: 1,
+          currency_id: "ARS"
+        })),
+        userId: userData.id || userData._id,
         shippingCost: Number(shippingCost),
         shippingAddress: {
-          street: address.street || "No especificada",
-          number: address.number || "S/N",
-          city: address.city || "No especificada",
-          zipCode: zipCode
+          street: streetClean,
+          number: address.number,
+          city: cityClean,
+          zipCode: zipCode,
+          // Enviamos el string completo para que el Backend lo guarde fácil
+          fullAddress: fullAddressString,
+          type: address.type,
+          floor: address.floor || "",
+          apartment: address.apartment || ""
         }
       };
 
-      // 3. DEBUG: El momento de la verdad
-      console.log("Payload que se envía al Backend:", payload);
+      console.log("🚀 Admin Payload listo:", payload);
 
+      // --- 4. ENVÍO AL BACKEND ---
       const response = await api.post('/payments/create-preference', payload);
 
-      console.log("Respuesta del Backend:", response.data);
-
       if (response.data.init_point) {
+        // Redirigimos al Checkout de Mercado Pago
         window.location.href = response.data.init_point;
       } else {
-        console.error("El backend no devolvió init_point:", response.data);
-        alert("El servidor no devolvió el link de pago.");
+        throw new Error("No se recibió el link de pago desde el servidor.");
       }
 
     } catch (error) {
-      // 4. DEBUG PROFUNDO: Ver qué dice el servidor exactamente
-      console.error("Error completo del catch:", error);
-      if (error.response) {
-        console.error("Data del error del servidor:", error.response.data);
-        console.error("Status del error:", error.response.status);
-      }
-      alert(`Error al procesar: ${error.response?.data?.error || error.message}`);
+      console.error("❌ Error en el proceso de compra:", error);
+      const errorMsg = error.response?.data?.error || error.message;
+      alert(`Hubo un problema: ${errorMsg}`);
     } finally {
       setLoading(false);
     }
@@ -196,52 +226,145 @@ const CartDrawer = ({ isOpen, onClose }) => {
 
         {/* MODAL DE DIRECCIÓN (POP-UP) */}
         {isAddressModalOpen && (
-          <div className="fixed inset-0 bg-black/60 z-100 flex items-center justify-center p-4 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
-              <h2 className="text-2xl font-serif mb-6 text-slate-800">Datos de Envío</h2>
+          /* El contenedor principal ahora usa 'inset-0' sin 'w-screen' para evitar el desfasaje por scrollbar */
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-9999 flex items-center justify-center p-4 overflow-y-auto">
+            <div
+              /* Añadimos 'my-auto' para asegurar centrado vertical si el contenido crece */
+              className="bg-white rounded-[2.5rem] p-8 md:p-12 max-w-2xl w-full shadow-2xl animate-modal relative my-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="text-center mb-10">
+                <h2 className="text-4xl font-serif text-slate-800">Detalles de Entrega</h2>
+                <p className="text-slate-400 mt-3 text-lg">Asegurá tus datos para una entrega perfecta.</p>
+              </div>
 
-              <form onSubmit={handleConfirmPurchase} className="space-y-4">
-                <input
-                  required
-                  type="text"
-                  placeholder="Calle"
-                  className="w-full border-b-2 py-2 outline-none focus:border-[#007f5f]"
-                  value={address.street}
-                  onChange={(e) => setAddress({ ...address, street: e.target.value })}
-                />
-                <div className="flex gap-4">
-                  <input
-                    required
-                    type="text"
-                    placeholder="Número"
-                    className="w-1/3 border-b-2 py-2 outline-none focus:border-[#007f5f]"
-                    value={address.number}
-                    onChange={(e) => setAddress({ ...address, number: e.target.value })}
-                  />
-                  <input
-                    required
-                    type="text"
-                    placeholder="Ciudad"
-                    className="flex-1 border-b-2 py-2 outline-none focus:border-[#007f5f]"
-                    value={address.city}
-                    onChange={(e) => setAddress({ ...address, city: e.target.value })}
-                  />
+              <form onSubmit={handleConfirmPurchase} className="space-y-8">
+                {/* FILA 1: CALLE Y NÚMERO */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <div className="md:col-span-3">
+                    <label className="admin-label">Nombre de la Calle</label>
+                    <input
+                      required
+                      type="text"
+                      className="admin-input text-lg"
+                      placeholder="Ej: Av. Meeks"
+                      value={address.street}
+                      onChange={(e) => setAddress({ ...address, street: e.target.value })}
+                    />
+                  </div>
+                  <div className="md:col-span-1">
+                    <label className="admin-label">Nro</label>
+                    <input
+                      required
+                      type="number"
+                      min="1"
+                      className="admin-input text-lg text-center"
+                      onKeyDown={(e) => { if (['-', 'e', '+'].includes(e.key)) e.preventDefault(); }}
+                      value={address.number}
+                      onChange={(e) => setAddress({ ...address, number: e.target.value })}
+                    />
+                  </div>
                 </div>
 
-                <div className="flex gap-3 mt-8">
+                {/* FILA 2: TIPO Y LOCALIDAD */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="flex flex-col">
+                    <label className="admin-label">Tipo de Vivienda</label>
+                    <select
+                      className="admin-select"
+                      value={address.type}
+                      onChange={(e) => setAddress({ ...address, type: e.target.value })}
+                    >
+                      <option value="casa">Casa</option>
+                      <option value="depto">Departamento / PH</option>
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col relative">
+                    <label className="admin-label">Localidad (CABA / GBA)</label>
+                    <input
+                      required
+                      type="text"
+                      className="admin-input font-medium"
+                      placeholder="Escribí para buscar..."
+                      value={searchTerm || address.city}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setSearchTerm(value);
+                        setShowSuggestions(true);
+                        setAddress({ ...address, city: value });
+                      }}
+                      onFocus={() => setShowSuggestions(true)}
+                    />
+
+                    {/* LISTA DE SUGERENCIAS */}
+                    {showSuggestions && searchTerm && (
+                      <div className="absolute top-full left-0 z-10000 w-full bg-white border border-slate-200 rounded-xl mt-1 shadow-2xl max-h-48 overflow-y-auto">
+                        {filteredLocalidades.length > 0 ? (
+                          filteredLocalidades.map((loc) => (
+                            <div
+                              key={loc}
+                              className="p-3 hover:bg-emerald-50 cursor-pointer text-sm text-slate-700 font-medium transition-colors border-b border-slate-50 last:border-none"
+                              onClick={() => {
+                                setAddress({ ...address, city: loc });
+                                setSearchTerm(loc);
+                                setShowSuggestions(false);
+                              }}
+                            >
+                              {loc}
+                            </div>
+                          ))
+                        ) : (
+                          <div className="p-3 text-xs text-slate-400 italic">Sin resultados</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* FILA 3: CONDICIONAL DEPTO */}
+                {address.type === 'depto' && (
+                  <div className="flex gap-6 p-5 bg-slate-50 rounded-2xl border border-slate-100 transition-all">
+                    <div className="flex-1">
+                      <label className="admin-label text-slate-500">Piso</label>
+                      <input
+                        required={address.type === 'depto'}
+                        type="text"
+                        placeholder="4"
+                        className="w-full bg-transparent border-b border-slate-300 py-1 outline-none focus:border-[#007f5f]"
+                        value={address.floor}
+                        onChange={(e) => setAddress({ ...address, floor: e.target.value })}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="admin-label text-slate-500">Departamento</label>
+                      <input
+                        required={address.type === 'depto'}
+                        type="text"
+                        placeholder="B"
+                        className="w-full bg-transparent border-b border-slate-300 py-1 outline-none focus:border-[#007f5f] uppercase"
+                        value={address.apartment}
+                        onChange={(e) => setAddress({ ...address, apartment: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* BOTONES */}
+                <div className="flex flex-col md:flex-row items-center gap-4 mt-10">
                   <button
                     type="button"
                     onClick={() => setIsAddressModalOpen(false)}
-                    className="flex-1 py-3 text-slate-500 font-semibold hover:bg-gray-50 rounded-xl transition-colors"
+                    className="w-full md:flex-1 py-4 text-slate-400 font-bold hover:text-slate-600 transition-colors"
                   >
-                    Cancelar
+                    VOLVER
                   </button>
                   <button
-                    type="submit" // <-- SEGUNDO PASO: Dispara handleConfirmPurchase
+                    type="submit"
                     disabled={loading}
-                    className="flex-1 py-3 bg-[#007f5f] text-white font-bold rounded-xl shadow-lg hover:bg-[#00664d] transition-all disabled:opacity-50"
+                    className="w-full md:flex-2 py-4 bg-[#007f5f] text-white font-bold rounded-2xl shadow-[0_10px_20px_rgba(0,127,95,0.2)] hover:bg-[#00664d] hover:-translate-y-1 transition-all active:scale-95 disabled:opacity-50 disabled:translate-y-0"
                   >
-                    {loading ? "Procesando..." : "Confirmar y Pagar"}
+                    {loading ? "PROCESANDO..." : "CONFIRMAR COMPRA"}
                   </button>
                 </div>
               </form>

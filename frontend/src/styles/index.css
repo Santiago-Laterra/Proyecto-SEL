@@ -9,3 +9,34 @@
 .font-proxima {
   font-family: "proxima-nova", sans-serif;
 }
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(-20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.animate-modal {
+  animation: modalIn 0.3s ease-out forwards;
+}
+
+/* Estilo para los inputs del Admin Form */
+.admin-input {
+  @apply w-full border-b-2 border-gray-200 py-2 outline-none transition-all duration-300;
+}
+
+.admin-input:focus {
+  @apply border-[#007f5f] text-slate-900;
+}
+
+.admin-label {
+  @apply text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-1 block;
+}
+
+/* Estilo para los selectores */
+.admin-select {
+  @apply w-full border-b-2 border-gray-200 py-2 outline-none bg-transparent cursor-pointer;
+}
+
+.admin-select:focus {
+  @apply border-[#007f5f];
+}
