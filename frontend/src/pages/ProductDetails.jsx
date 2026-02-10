@@ -20,6 +20,8 @@ const ProductDetails = () => {
   const [shippingCost, setShippingCost] = useState(null);
   const [calculating, setCalculating] = useState(false);
   const { addToCart, updateShipping, setZipCode: setGlobalZip } = useCart();
+  const { clearShipping } = useCart();
+
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -34,6 +36,11 @@ const ProductDetails = () => {
     };
     fetchProduct();
   }, [id]);
+
+  useEffect(() => {
+    // Al entrar a CUALQUIER producto, el Admin ordena limpiar el envío previo
+    clearShipping();
+  }, []);
 
   const handleCalculateShipping = async () => {
     if (zipCode.length < 4) return alert("Por favor, ingresá un código postal válido");

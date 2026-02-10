@@ -7,22 +7,8 @@ const CartContext = createContext();
 export const CartProvider = ({ children }) => {
 
 
-  const [zipCode, setZipCode] = useState(() => {
-    // Intentamos recuperar el CP guardado, si no, vacío
-    return localStorage.getItem('soleyah_zipcode') || '';
-  });
-
-  const [shippingCost, setShippingCost] = useState(() => {
-    // Intentamos recuperar el costo guardado, si no, 0
-    return Number(localStorage.getItem('soleyah_shipping_cost')) || 0;
-  });
-
-  useEffect(() => {
-    localStorage.setItem('soleyah_zipcode', zipCode);
-    localStorage.setItem('soleyah_shipping_cost', shippingCost.toString());
-  }, [zipCode, shippingCost]);
-
-
+  const [zipCode, setZipCode] = useState('');
+  const [shippingCost, setShippingCost] = useState(0);
 
 
   // Inicializamos el carrito con lo que haya en localStorage o un array vacío
@@ -61,8 +47,26 @@ export const CartProvider = ({ children }) => {
 
   const cartTotal = cart.reduce((acc, item) => acc + Number(item.price), 0);
 
+  const clearShipping = () => {
+    setShippingCost(0);
+    setZipCode('');
+    // Opcional: limpiar también el localStorage si decidís mantenerlo
+    localStorage.removeItem('soleyah_zipcode');
+    localStorage.removeItem('soleyah_shipping_cost');
+  };
+
   return (
-    <CartContext.Provider value={{ cart, addToCart, shippingCost, updateShipping, removeFromCart, cartTotal, zipCode, setZipCode }}>
+    <CartContext.Provider value={{
+      cart,
+      addToCart,
+      shippingCost,
+      updateShipping,
+      removeFromCart,
+      cartTotal,
+      zipCode,
+      setZipCode,
+      clearShipping // <--- Agregá esto aquí
+    }}>
       {children}
     </CartContext.Provider>
   );
