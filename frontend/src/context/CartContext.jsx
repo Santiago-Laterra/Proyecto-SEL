@@ -1,46 +1,51 @@
-// src/context/CartContext.jsx
 import { createContext, useState, useEffect, useContext } from 'react';
-
 
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
+  // 1. Estado para el Código Postal (con persistencia)
+  const [zipCode, setZipCode] = useState(() => {
+    return localStorage.getItem('soleyah_zipcode') || '';
+  });
 
+  // 2. Estado para el Costo de Envío (con persistencia)
+  const [shippingCost, setShippingCost] = useState(() => {
+    const saved = localStorage.getItem('soleyah_shipping_cost');
+    return saved ? Number(saved) : 0;
+  });
 
-  const [zipCode, setZipCode] = useState('');
-  const [shippingCost, setShippingCost] = useState(0);
-
-
-  // Inicializamos el carrito con lo que haya en localStorage o un array vacío
+  // 3. Estado para el Carrito
   const [cart, setCart] = useState(() => {
     const savedCart = localStorage.getItem('soleyah_cart');
     return savedCart ? JSON.parse(savedCart) : [];
   });
 
-  // Cada vez que el carrito cambia, lo guardamos en localStorage
+  // Persistencia del carrito
   useEffect(() => {
     localStorage.setItem('soleyah_cart', JSON.stringify(cart));
   }, [cart]);
 
+  // Función para actualizar ZIP y persistirlo
+  const handleSetZipCode = (zip) => {
+    setZipCode(zip);
+    localStorage.setItem('soleyah_zipcode', zip);
+  };
 
+  // Función para actualizar Envío y persistirlo
   const updateShipping = (cost) => {
     const numericCost = Number(cost);
     setShippingCost(numericCost);
     localStorage.setItem('soleyah_shipping_cost', numericCost.toString());
   };
-  // Función para añadir al carrito
+
   const addToCart = (product) => {
     setCart((prevCart) => {
       const isProductInCart = prevCart.find((item) => item._id === product._id);
-      if (isProductInCart) {
-        // Si ya está, podrías aumentar la cantidad, o simplemente dejarlo así si es un PDF
-        return prevCart;
-      }
+      if (isProductInCart) return prevCart;
       return [...prevCart, product];
     });
   };
 
-  // Función para eliminar
   const removeFromCart = (productId) => {
     setCart((prevCart) => prevCart.filter((item) => item._id !== productId));
   };
@@ -50,7 +55,6 @@ export const CartProvider = ({ children }) => {
   const clearShipping = () => {
     setShippingCost(0);
     setZipCode('');
-    // Opcional: limpiar también el localStorage si decidís mantenerlo
     localStorage.removeItem('soleyah_zipcode');
     localStorage.removeItem('soleyah_shipping_cost');
   };
@@ -59,13 +63,14 @@ export const CartProvider = ({ children }) => {
     <CartContext.Provider value={{
       cart,
       addToCart,
-      shippingCost,
-      updateShipping,
       removeFromCart,
       cartTotal,
-      zipCode,
-      setZipCode,
-      clearShipping // <--- Agregá esto aquí
+      shippingCost,
+      setShippingCost: updateShipping, // Sincroniza con el Drawer
+      updateShipping,                  // Sincroniza con ProductDetails
+      zipCod: zipCode,                 // Usamos zipCod para que CartDrawer no rompa
+      setZipCode: handleSetZipCode,    // Sincroniza con ambos
+      clearShipping
     }}>
       {children}
     </CartContext.Provider>
