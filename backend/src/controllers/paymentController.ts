@@ -12,24 +12,35 @@ export const createPreference = async (req: Request, res: Response) => {
   try {
     const { items, shippingAddress, shippingCost, userId } = req.body;
 
+    console.log("=== 1. DATOS RECIBIDOS DEL FRONTEND ===");
     const itemsTotal = items.reduce((acc: number, item: any) => acc + (item.unit_price * item.quantity), 0);
     const totalAmount = itemsTotal + (Number(shippingCost) || 0);
 
-    // 1. CREAMOS LA ORDEN EN MONGODB (Estado inicial: pending)
+    // 1. CREAMOS LA ORDEN EN MONGODB
+    console.log("=== 2. INTENTANDO GUARDAR ORDEN EN MONGO ===");
     const newOrder = new Order({
       user: userId,
       items: items,
       shippingAddress: shippingAddress,
       shippingCost: Number(shippingCost) || 0,
       totalAmount: totalAmount,
-      status: 'pending' // Estado por defecto para el Admin
+      status: 'pending'
     });
 
     const savedOrder = await newOrder.save();
+    console.log("Orden guardada con ID:", savedOrder._id);
 
     // 2. PREPARAMOS LOS ITEMS
     const preference = new Preference(client);
-    const allItems = [...items];
+
+    // Aseguramos que los números sean números
+    const allItems = items.map((item: any) => ({
+      id: item.id,
+      title: item.title,
+      unit_price: 1,
+      quantity: Number(item.quantity),
+      currency_id: "ARS"
+    }));
 
     if (shippingCost && shippingCost > 0) {
       allItems.push({
@@ -40,26 +51,30 @@ export const createPreference = async (req: Request, res: Response) => {
       });
     }
 
-    // 3. CREAMOS LA PREFERENCIA CON FILTRADO DE RETORNO
+    // 3. CREAMOS LA PREFERENCIA
+    console.log("=== 3. LLAMANDO A MERCADO PAGO API ===");
+
+    // Quitamos 'auto_return' para debuggear si ese es el bloqueo real
     const result = await preference.create({
       body: {
         items: allItems,
         external_reference: savedOrder._id.toString(),
         back_urls: {
-          // ASEGÚRATE de que estas URLs existan en tu RouterApp.jsx
           success: "http://localhost:5173/pago-exitoso",
           failure: "http://localhost:5173/carrito",
           pending: "http://localhost:5173/pago-pendiente"
-
         },
-        // Cambia "approved" por "all" para mayor compatibilidad en desarrollo
-        auto_return: "approved",
+        // Lo comentamos para asegurar que la API acepte la creación
+        // auto_return: "all", 
       }
     });
+
+    console.log("Respuesta de MP recibida. ID de Preferencia:", result.id);
 
     // 4. GUARDAMOS EL ID DE PREFERENCIA
     savedOrder.mpPreferenceId = result.id!;
     await savedOrder.save();
+    console.log("Orden actualizada con ID de MP.");
 
     res.status(200).json({
       id: result.id,
@@ -68,10 +83,22 @@ export const createPreference = async (req: Request, res: Response) => {
     });
 
   } catch (error: any) {
-    console.error("Error al crear preferencia/orden:", error.message || error);
-    res.status(500).json({ message: "Error al procesar la compra", error: error.message });
+    console.error("=== ❌ ERROR DETALLADO DE MERCADO PAGO ===");
+
+    // Esto te va a decir exactamente qué campo está mal (ej: "item.unit_price invalid")
+    if (error.apiResponse && error.apiResponse.body) {
+      console.log("Causa del rechazo:", JSON.stringify(error.apiResponse.body.cause, null, 2));
+      console.log("Mensaje de MP:", error.apiResponse.body.message);
+    } else {
+      console.error("Error general:", error.message);
+    }
+
+    res.status(500).json({
+      message: "Error al procesar la compra",
+      mpError: error.apiResponse?.body || error.message
+    });
   }
-};
+}
 
 // --- EL WEBHOOK ---
 export const receiveWebhook = async (req: Request, res: Response) => {

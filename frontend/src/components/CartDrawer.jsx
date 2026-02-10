@@ -35,40 +35,80 @@ const CartDrawer = ({ isOpen, onClose }) => {
   const handleConfirmPurchase = async (e) => {
     e.preventDefault();
 
-    // VALIDACIÓN EXTRA
-    if (!zipCode) {
-      alert("Por favor, vuelve a calcular el costo de envío con tu código postal antes de pagar.");
-      setIsAddressModalOpen(false); // Cerramos el modal para que lo vea
+    // 1. DEBUG: Ver qué tenemos antes de empezar
+    console.log("--- Iniciando Proceso de Pago ---");
+    console.log("Estado actual - zipCode:", zipCode);
+    console.log("Estado actual - shippingCost:", shippingCost);
+    console.log("Estado actual - address:", address);
+
+    if (!zipCode || !shippingCost) {
+      alert("Faltan datos de envío (Código Postal o Costo).");
       return;
     }
 
     setLoading(true);
 
     try {
-      const userData = JSON.parse(localStorage.getItem('user'));
+      const userRaw = localStorage.getItem('user');
+      if (!userRaw) {
+        alert("No se encontró sesión de usuario. Por favor, inicia sesión.");
+        return;
+      }
+
+      const userData = JSON.parse(userRaw);
+
+      // 2. VALIDACIÓN DE ITEMS
+      if (cart.length === 0) {
+        alert("El carrito está vacío.");
+        return;
+      }
 
       const payload = {
-        items: cart.map(product => ({
-          id: product._id,
-          title: product.name,
-          unit_price: Math.round(Number(product.price)),
-          quantity: 1,
-          currency_id: "ARS"
-        })),
-        userId: userData.id,
-        shippingCost: shippingCost, // El valor que ya calculaste antes
+        items: cart.map(product => {
+          // Validamos que cada producto tenga lo necesario
+          if (!product.price || !product.name) {
+            console.error("Producto con datos incompletos:", product);
+          }
+          return {
+            id: product._id,
+            title: product.name,
+            unit_price: Math.round(Number(product.price)),
+            quantity: 1,
+            currency_id: "ARS"
+          };
+        }),
+        userId: userData.id || userData._id, // Algunos usan id y otros _id
+        shippingCost: Number(shippingCost),
         shippingAddress: {
-          ...address, // street, number, city
-          zipCode: zipCode // <--- Usás el que ya tenías en el contexto del carrito
+          street: address.street || "No especificada",
+          number: address.number || "S/N",
+          city: address.city || "No especificada",
+          zipCode: zipCode
         }
       };
 
+      // 3. DEBUG: El momento de la verdad
+      console.log("Payload que se envía al Backend:", payload);
+
       const response = await api.post('/payments/create-preference', payload);
-      if (response.data.init_point) window.location.href = response.data.init_point;
+
+      console.log("Respuesta del Backend:", response.data);
+
+      if (response.data.init_point) {
+        window.location.href = response.data.init_point;
+      } else {
+        console.error("El backend no devolvió init_point:", response.data);
+        alert("El servidor no devolvió el link de pago.");
+      }
 
     } catch (error) {
-      console.error("Error:", error);
-      alert("Error al procesar la compra");
+      // 4. DEBUG PROFUNDO: Ver qué dice el servidor exactamente
+      console.error("Error completo del catch:", error);
+      if (error.response) {
+        console.error("Data del error del servidor:", error.response.data);
+        console.error("Status del error:", error.response.status);
+      }
+      alert(`Error al procesar: ${error.response?.data?.error || error.message}`);
     } finally {
       setLoading(false);
     }
