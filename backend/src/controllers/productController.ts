@@ -119,7 +119,6 @@ const deleteProduct = async (req: Request, res: Response) => {
   }
 };
 
-
 const getProductById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -135,4 +134,30 @@ const getProductById = async (req: Request, res: Response) => {
   }
 };
 
-export { getProducts, addProduct, updateProduct, deleteProduct, getProductById };
+const importProducts = async (req: Request, res: Response) => {
+  try {
+    const products = req.body; // El array de objetos que mandamos desde el front
+
+    for (const item of products) {
+      // Usamos findOneAndUpdate con upsert: true
+      // Si encuentra el producto por el nombre (o ID), lo actualiza. 
+      // Si no existe, lo crea.
+      await Product.findOneAndUpdate(
+        { name: item.name }, // Criterio de búsqueda
+        {
+          price: Number(item.price),
+          stock: Number(item.stock),
+          description: item.description,
+          category: item.category,
+          // Si el Excel no tiene imagen, podrías dejar una por defecto
+        },
+        { upsert: true, new: true }
+      );
+    }
+
+    res.status(200).json({ message: "Importación exitosa" });
+  } catch (error) {
+    res.status(500).json({ message: "Error al importar datos" });
+  }
+};
+export { getProducts, addProduct, updateProduct, deleteProduct, getProductById, importProducts };

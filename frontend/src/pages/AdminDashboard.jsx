@@ -155,6 +155,50 @@ const AdminDashboard = () => {
     }
   };
 
+
+  const handleImportExcel = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    setLoading(true);
+
+    reader.onload = async (event) => {
+      try {
+        const data = event.target.result;
+        const workbook = XLSX.read(data, { type: 'binary' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+        if (jsonData.length === 0) {
+          alert("El archivo está vacío");
+          setLoading(false);
+          return;
+        }
+
+        // Confirmación antes de procesar
+        if (window.confirm(`¿Estás segura de importar/actualizar ${jsonData.length} productos?`)) {
+          const token = localStorage.getItem('token');
+          await api.post('/products/import', jsonData, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+
+          alert("¡Base de datos actualizada con éxito! 🚀");
+          fetchProducts(); // Recargamos la lista
+        }
+      } catch (error) {
+        console.error("Error importando:", error);
+        alert("Hubo un error al procesar el Excel. Revisá el formato.");
+      } finally {
+        setLoading(false);
+        e.target.value = ""; // Limpiamos el input
+      }
+    };
+
+    reader.readAsBinaryString(file);
+  };
+
   return (
     <div className="p-8 bg-gray-50 min-h-screen pt-28">
       <div className="max-w-6xl mx-auto">
