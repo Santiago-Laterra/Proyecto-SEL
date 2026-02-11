@@ -123,12 +123,13 @@ const ProductDetails = () => {
     fetchProduct();
   }, [id]);
 
-  // 2. Limpiar envío previo al entrar a un nuevo producto
-  //useEffect(() => {
-  //  clearShipping();
-  //}, [clearShipping]);
+  useEffect(() => {
+    return () => {
+      if (clearShipping) clearShipping();
+    };
+  }, []);
 
-  // 3. LÓGICA DE CÁLCULO LOCAL (Eliminada la API)
+
   // 3. LÓGICA DE CÁLCULO LOCAL (Actualizada para usar el mapa de localidades)
   const handleCalculateShipping = () => {
     if (zipCode.length < 4) return alert("Por favor, ingresá un código postal válido");
@@ -138,6 +139,15 @@ const ProductDetails = () => {
     setTimeout(() => {
       // 1. Traducimos el CP a Nombre de Localidad (ej: "1439" -> "Villa Lugano")
       const nombreLocalidad = CP_A_LOCALIDAD[zipCode];
+
+
+      if (!nombreLocalidad) {
+        alert("Lo sentimos, por el momento no realizamos envíos a esta zona.");
+        setShippingCost(null);
+        if (clearShipping) clearShipping(); // Limpiamos cualquier rastro previo
+        setCalculating(false);
+        return;
+      }
 
       // 2. Buscamos los KM usando el nombre obtenido, o el DEFAULT si no existe
       const km = DISTANCIAS_KM[nombreLocalidad] !== undefined
@@ -233,9 +243,13 @@ const ProductDetails = () => {
                 <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
+                  inputMode="numeric" // Abre el teclado numérico en celulares
                   placeholder="Tu código postal (ej: 1828)"
                   value={zipCode}
-                  onChange={(e) => setZipCode(e.target.value)}
+                  onChange={(e) => {
+                    setZipCode(e.target.value);
+                    if (e.target.value === '') setShippingCost(null); // Limpia el costo visual si borran el input
+                  }}
                   className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#007f5f]"
                 />
               </div>
@@ -252,7 +266,7 @@ const ProductDetails = () => {
               <div className="mt-4 p-3 bg-white rounded-lg border border-emerald-100 flex justify-between items-center animate-in fade-in slide-in-from-top-2">
                 <span className="text-sm text-slate-600">Costo de envío:</span>
                 <span className="font-bold text-emerald-700">
-                  {shippingCost === 0 ? "¡Envio sin cargo!" : `$ ${shippingCost.toLocaleString('es-AR')}`}
+                  {shippingCost === 0 ? "¡Envío sin cargo!" : `$ ${shippingCost.toLocaleString('es-AR')}`}
                 </span>
               </div>
             )}

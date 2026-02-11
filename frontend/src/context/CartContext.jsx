@@ -14,6 +14,8 @@ export const CartProvider = ({ children }) => {
     return saved ? Number(saved) : 0;
   });
 
+
+
   // 3. Estado para el Carrito
   const [cart, setCart] = useState(() => {
     const savedCart = localStorage.getItem('soleyah_cart');
@@ -55,6 +57,8 @@ export const CartProvider = ({ children }) => {
   const clearShipping = () => {
     setShippingCost(0);
     setZipCode('');
+    localStorage.removeItem('soleyah_zipcode');
+    localStorage.removeItem('soleyah_shipping_cost');
   };
 
   return (
