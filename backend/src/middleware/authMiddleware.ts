@@ -1,42 +1,55 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { User } from '../model/userModel';
 
-
-const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
+const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   const header = req.headers.authorization;
   const SECRET_KEY = process.env.JWT_SECRET;
 
-  // 1. Validación de la secret_key
+  // 1. Validación de la configuración
   if (!SECRET_KEY) {
     return res.status(500).json({ success: false, message: "Error de configuración del servidor" });
   }
 
-  // 2. Validar que exista el header y tenga el formato Bearer
+  // 2. Validar formato del Header
   if (!header || !header.startsWith('Bearer ')) {
-    return res.status(401).json({ success: false, message: "El token es requerido y debe ser formato Bearer" });
+    return res.status(401).json({ success: false, message: "Token requerido (formato Bearer)" });
   }
 
   const token = header.split(" ")[1];
 
   try {
-    // 3. Verificar el token
-    const payload = jwt.verify(token, SECRET_KEY) as any;
+    // 3. PRIMERO VERIFICAMOS EL TOKEN
+    // Si el token es inválido o expiró, saltará directamente al catch
+    const decoded = jwt.verify(token, SECRET_KEY) as any;
 
-    // 4. Inyectamos el usuario en la req
-    // Esto es lo que permite que isAdmin vea el email después
-    (req as any).user = payload;
+    // 4. LUEGO BUSCAMOS AL USUARIO EN LA BD
+    const user = await User.findById(decoded.id);
 
+    if (!user) {
+      return res.status(401).json({ success: false, message: "Usuario no encontrado" });
+    }
+
+    // 5. COMPROBACIÓN DE SESIÓN ÚNICA
+    // Si el ID de sesión del token no es el mismo que el guardado en la BD...
+    if (user.lastSessionId !== decoded.sessionId) {
+      return res.status(401).json({
+        success: false,
+        message: "Tu sesión ha sido iniciada en otro dispositivo.",
+        code: "SESSION_EXPIRED"
+      });
+    }
+
+    // 6. Si todo está ok, inyectamos el usuario en la req
+    (req as any).user = decoded;
     next();
-  } catch (error: any) {
-    // 5. Manejo de errores específicos
-    if (error.name === "TokenExpiredError") {
-      return res.status(401).json({ success: false, message: "El token expiró" });
-    }
-    if (error.name === "JsonWebTokenError") {
-      return res.status(401).json({ success: false, message: "Token inválido" });
-    }
 
-    res.status(401).json({ success: false, message: "Error al procesar el token" });
+  } catch (error: any) {
+    // 7. Manejo de errores de JWT
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({ success: false, message: "El token ha expirado" });
+    }
+    return res.status(401).json({ success: false, message: "Token inválido o error de sesión" });
   }
 };
 

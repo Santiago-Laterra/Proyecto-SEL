@@ -53,6 +53,13 @@ const login = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Credenciales inválidas" });
     }
 
+
+    // Generamos un ID de sesión único para este login
+    const sessionId = Math.random().toString(36).substring(7);
+    user.lastSessionId = sessionId;
+    await user.save();
+
+
     // 3. Creación del Token (JWT)
     // Asegúrate de tener JWT_SECRET en tu archivo .env
     const secret = process.env.JWT_SECRET;
@@ -64,7 +71,7 @@ const login = async (req: Request, res: Response) => {
       {
         id: user._id,
         email: user.email,
-        role: user.role // Esto permite que el Middleware de Admin funcione
+        role: user.role, sessionId // Esto permite que el Middleware de Admin funcione
       },
       secret,
       { expiresIn: '24h' } // 1 día de sesión

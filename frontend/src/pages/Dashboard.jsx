@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import * as XLSX from 'xlsx';
-import { X, ImagePlus } from 'lucide-react'; // Para iconos bonitos
+import { X, ImagePlus, FileSpreadsheet, Loader2 } from 'lucide-react';
 
 const Dashboard = () => {
   const { isAdmin } = useAuth();
@@ -13,29 +13,60 @@ const Dashboard = () => {
     name: '',
     description: '',
     price: '',
-    stock: '',
+    stock: '0', // Inicializamos como string para el input
     category: ''
   });
 
-  const [files, setFiles] = useState([]); // Array de archivos reales
-  const [previews, setPreviews] = useState([]); // Array de URLs temporales para ver las fotos
+  const [files, setFiles] = useState([]);
+  const [previews, setPreviews] = useState([]);
   const [loading, setLoading] = useState(false);
 
   if (!isAdmin) return <div className="text-center py-20">No tienes acceso a esta sección.</div>;
 
-  // Manejar selección de archivos y generar previews
+  // --- LÓGICA DE EXCEL (IMPORTAR) ---
+  const handleImportExcel = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    setLoading(true);
+
+    reader.onload = async (event) => {
+      try {
+        const data = event.target.result;
+        const workbook = XLSX.read(data, { type: 'binary' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+        if (window.confirm(`¿Estás segura de importar ${jsonData.length} productos?`)) {
+          // El token se saca del localStorage para la autorización
+          const token = localStorage.getItem('token');
+          await api.post('/products/import', jsonData, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          alert("¡Importación masiva exitosa! 🚀");
+          navigate('/admin');
+        }
+      } catch (error) {
+        console.error("Error al importar:", error);
+        alert("Error al procesar el archivo. Verificá el formato.");
+      } finally {
+        setLoading(false);
+        e.target.value = ""; // Reset del input file
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
+  // --- LÓGICA DE FORMULARIO MANUAL ---
   const handleFileChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
-
-    // Guardamos los archivos reales para el backend
     setFiles((prev) => [...prev, ...selectedFiles]);
-
-    // Generamos URLs temporales para que el Admin vea las imágenes
     const newPreviews = selectedFiles.map(file => URL.createObjectURL(file));
     setPreviews((prev) => [...prev, ...newPreviews]);
   };
 
-  // Eliminar una foto de la lista antes de subir
   const removeImage = (index) => {
     setFiles(files.filter((_, i) => i !== index));
     setPreviews(previews.filter((_, i) => i !== index));
@@ -51,6 +82,7 @@ const Dashboard = () => {
 
     setLoading(true);
     const data = new FormData();
+    // Unificamos el uso de formData
     data.append('name', formData.name);
     data.append('description', formData.description);
     data.append('price', formData.price);
@@ -64,7 +96,7 @@ const Dashboard = () => {
     try {
       await api.post('/products/add', data);
       alert("¡Producto cargado con éxito!");
-      setFormData({ name: '', description: '', price: '', stock: '', category: '' });
+      setFormData({ name: '', description: '', price: '', stock: '0', category: '' });
       setFiles([]);
       setPreviews([]);
       navigate('/admin');
@@ -85,38 +117,33 @@ const Dashboard = () => {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input type="text" name="name" placeholder="Nombre del producto" value={formData.name} onChange={handleChange} className="w-full p-3 border rounded-xl" required />
-              <input type="text" name="category" placeholder="Categoría" value={formData.category} onChange={handleChange} className="w-full p-3 border rounded-xl" required />
+              <input type="text" name="name" placeholder="Nombre del producto" value={formData.name} onChange={handleChange} className="w-full p-3 border rounded-xl outline-emerald-500" required />
+              <input type="text" name="category" placeholder="Categoría" value={formData.category} onChange={handleChange} className="w-full p-3 border rounded-xl outline-emerald-500" required />
             </div>
 
-            <textarea name="description" placeholder="Descripción detallada..." value={formData.description} onChange={handleChange} className="w-full p-3 border rounded-xl h-32" required />
+            <textarea name="description" placeholder="Descripción detallada..." value={formData.description} onChange={handleChange} className="w-full p-3 border rounded-xl h-32 outline-emerald-500 resize-none" required />
 
             <div className="flex gap-4">
               <div className="flex-1">
                 <label className="text-xs text-gray-500 ml-2">Precio (ARS)</label>
-                <input type="number" name="price" value={formData.price} onChange={handleChange} className="w-full p-3 border rounded-xl" required />
+                <input type="number" name="price" value={formData.price} onChange={handleChange} className="w-full p-3 border rounded-xl outline-emerald-500" required />
               </div>
               <div className="flex-1">
                 <label className="text-xs text-gray-500 ml-2">Stock disponible</label>
                 <input
                   type="number"
-                  min="0" // El stock mínimo es 0
-                  placeholder="Cantidad disponible"
+                  name="stock" // Agregado el name para que handleChange funcione
+                  min="0"
                   onKeyDown={(e) => { if (e.key === '-' || e.key === 'e') e.preventDefault(); }}
-                  className="tu-clase-de-input"
-                  value={productData.stock}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value);
-                    setProductData({ ...productData, stock: val < 0 ? 0 : val });
-                  }}
+                  className="w-full p-3 border rounded-xl outline-emerald-500"
+                  value={formData.stock}
+                  onChange={handleChange} // Usamos el mismo handleChange unificado
                 />
               </div>
             </div>
 
-            {/* ÁREA DE FOTOS (Estilo Drag & Drop) */}
             <div className="space-y-4">
               <label className="block text-sm font-medium text-gray-700">Fotos del producto</label>
-
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {previews.map((url, index) => (
                   <div key={index} className="relative group aspect-square rounded-xl overflow-hidden border">
@@ -134,28 +161,40 @@ const Dashboard = () => {
                   </div>
                 ))}
 
-                {/* Botón de añadir más */}
-                <label className="cursor-pointer aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center hover:bg-gray-50 transition-colors">
-                  <ImagePlus className="text-gray-400" />
+                <label className="cursor-pointer aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center hover:bg-gray-50 transition-colors group">
+                  <ImagePlus className="text-gray-400 group-hover:text-emerald-500 transition-colors" />
                   <span className="text-[10px] mt-2 text-gray-500 font-medium">Añadir foto</span>
                   <input type="file" onChange={handleFileChange} className="hidden" multiple accept="image/*" />
                 </label>
               </div>
             </div>
 
-            <button type="submit" disabled={loading} className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold hover:bg-emerald-700 transition disabled:opacity-50 shadow-lg shadow-emerald-100">
-              {loading ? "Subiendo a la nube..." : "🚀 Publicar Producto"}
+            <button type="submit" disabled={loading} className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold hover:bg-emerald-700 transition disabled:opacity-50 shadow-lg shadow-emerald-100 flex justify-center items-center gap-2">
+              {loading ? <><Loader2 className="animate-spin" size={20} /> Procesando...</> : "🚀 Publicar Producto"}
             </button>
           </form>
         </div>
 
-        {/* Sección Reportes lateral */}
-        <div className="bg-emerald-50 p-6 rounded-2xl border border-emerald-100 h-fit">
+        {/* --- SECCIÓN ACCIONES RÁPIDAS (Excel) --- */}
+        <div className="bg-emerald-50 p-6 rounded-2xl border border-emerald-100 h-fit space-y-4">
           <h2 className="font-bold text-emerald-800 mb-2">Acciones Rápidas</h2>
-          <p className="text-sm text-emerald-600 mb-4 font-medium">Respaldo local del inventario.</p>
-          <button onClick={() => {/* handleExportExcel */ }} className="w-full bg-white text-emerald-700 border border-emerald-200 px-4 py-3 rounded-xl font-bold hover:bg-emerald-700 hover:text-white transition flex items-center justify-center gap-2">
-            Descargar Excel
-          </button>
+
+          {/* BOTÓN IMPORTAR */}
+          <div>
+            <p className="text-xs text-emerald-600 mb-2 font-medium">Carga masiva desde archivo.</p>
+            <input type="file" id="import-excel" className="hidden" accept=".xlsx, .xls" onChange={handleImportExcel} />
+            <label htmlFor="import-excel" className="w-full bg-emerald-600 text-white px-4 py-3 rounded-xl font-bold hover:bg-emerald-700 transition flex items-center justify-center gap-2 cursor-pointer">
+              <FileSpreadsheet size={18} />
+              Importar Excel
+            </label>
+          </div>
+
+          <div className="pt-4 border-t border-emerald-200">
+            <p className="text-xs text-emerald-600 mb-2 font-medium">Respaldo local del inventario.</p>
+            <button onClick={() => {/* handleExportExcel */ }} className="w-full bg-white text-emerald-700 border border-emerald-200 px-4 py-3 rounded-xl font-bold hover:bg-emerald-50 transition flex items-center justify-center gap-2">
+              Descargar Excel
+            </button>
+          </div>
         </div>
       </div>
     </div>
