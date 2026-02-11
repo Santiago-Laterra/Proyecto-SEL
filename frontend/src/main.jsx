@@ -4,12 +4,15 @@ import './styles/index.css'
 import RouterApp from './routes/Router'
 import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext';
+import { WishlistProvider } from './context/WishlistContext';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <AuthProvider>
       <CartProvider>
-        <RouterApp />
+        <WishlistProvider>
+          <RouterApp />
+        </WishlistProvider>
       </CartProvider>
     </AuthProvider>
   </StrictMode>,

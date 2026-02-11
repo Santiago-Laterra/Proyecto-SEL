@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 import { Heart, Truck, MapPin } from 'lucide-react';
 import api from '../services/api';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
+
 
 // Estilos de Swiper
 import 'swiper/css';
@@ -104,6 +106,9 @@ const ProductDetails = () => {
   const [zipCode, setZipCode] = useState('');
   const [shippingCost, setShippingCost] = useState(null);
   const [calculating, setCalculating] = useState(false);
+  const { toggleWishlist, isFavorite } = useWishlist();
+
+  const navigate = useNavigate();
 
   // Traemos las funciones del Contexto
   const { addToCart, updateShipping, setZipCode: setGlobalZip, clearShipping } = useCart();
@@ -182,6 +187,11 @@ const ProductDetails = () => {
 
   const carouselImages = Array.isArray(product.image) ? product.image : [product.image];
 
+  const handleBuyNow = () => {
+    addToCart(product); // Lo agrega al carrito
+    navigate('/carrito'); // Lo manda directo a pagar (o al home si tu carrito es un Drawer)
+  };
+
   return (
     <div className="min-h-screen bg-white pt-32 pb-20 px-5 md:px-[160.4px] font-proxima">
       <div className="flex flex-col md:flex-row gap-12">
@@ -226,7 +236,10 @@ const ProductDetails = () => {
             >
               Añadir al carrito
             </button>
-            <button className="w-full border border-[#007f5f] text-[#007f5f] py-4 rounded-md font-bold hover:bg-slate-50 transition-all">
+            <button
+              onClick={handleBuyNow}
+              className="w-full border border-[#007f5f] text-[#007f5f] py-4 rounded-md font-bold hover:bg-slate-50 transition-all"
+            >
               Compra ahora
             </button>
           </div>
@@ -272,9 +285,17 @@ const ProductDetails = () => {
             )}
           </div>
 
-          <button className="flex items-center gap-2 text-slate-500 text-sm hover:text-slate-800 transition-colors w-fit mt-2">
-            <Heart size={18} />
-            <span className="underline">Añadir a la lista de deseos</span>
+          <button
+            onClick={() => toggleWishlist(product)}
+            className="flex items-center gap-2 text-slate-500 text-sm hover:text-slate-800 transition-colors w-fit mt-2 group"
+          >
+            <Heart
+              size={18}
+              className={`transition-colors ${isFavorite(product._id) ? 'fill-red-500 text-red-500' : 'text-slate-500'}`}
+            />
+            <span className={isFavorite(product._id) ? 'text-red-600 font-medium' : 'underline'}>
+              {isFavorite(product._id) ? 'En tu lista de deseos' : 'Añadir a la lista de deseos'}
+            </span>
           </button>
 
           <div className="mt-4 border-t border-gray-100 pt-8 text-slate-600 mb-4 whitespace-pre-line text-sm">

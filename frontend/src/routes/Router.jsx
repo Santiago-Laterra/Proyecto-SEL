@@ -12,6 +12,7 @@ import PaymentPending from '../pages/PaymentPending';
 import ProductDetails from '../pages/ProductDetails';
 import Contact from '../components/Contact'; // Agregado
 
+
 const RouterApp = () => {
   return (
     <BrowserRouter>
