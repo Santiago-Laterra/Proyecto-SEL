@@ -4,21 +4,9 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 
 const CartDrawer = ({ isOpen, onClose }) => {
-  // Solo consumimos datos. No usamos setShippingCost aquí.
   const { cart, removeFromCart, cartTotal, shippingCost, zipCod } = useCart();
   const [loading, setLoading] = useState(false);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
-
-  // Estados para el buscador de localidades (solo visual)
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showSuggestions, setShowSuggestions] = useState(false);
-
-  const localidadesDisponibles = ["Lomas de Zamora", "Temperley", "Banfield", "Adrogué", "Villa Lugano", "Palermo", "Núñez"];
-
-  const filteredLocalidades = localidadesDisponibles.filter(loc =>
-    loc.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   const [address, setAddress] = useState({
     street: '',
     number: '',
@@ -29,43 +17,21 @@ const CartDrawer = ({ isOpen, onClose }) => {
   });
 
   const CP_A_OPCIONES = {
-    // --- CABA (Capital Federal) ---
-    "1173": ["Almagro"],
-    "1428": ["Belgrano", "Colegiales"],
-    "1218": ["Boedo"],
-    "1405": ["Caballito"],
-    "1133": ["Constitución", "San Telmo", "Monserrat"],
-    "1406": ["Flores", "Parque Chacabuco"],
-    "1407": ["Floresta", "Parque Avellaneda"],
-    "1408": ["Liniers"],
-    "1437": ["Nueva Pompeya", "Parque Patricios"],
-    "1429": ["Núñez"],
-    "1425": ["Palermo"],
-    "1430": ["Saavedra", "Villa Pueyrredón"],
-    "1224": ["San Cristóbal"],
-    "1001": ["San Nicolás"],
-    "1414": ["Villa Crespo"],
-    "1417": ["Villa del Parque", "Villa General Mitre"],
-    "1419": ["Villa Devoto"],
-    "1439": ["Villa Lugano"],
-    "1431": ["Villa Urquiza"],
-
-    // --- GBA SUR ---
-    "1824": ["Lanús", "Gerli"],
-    "1826": ["Remedios de Escalada"],
-    "1828": ["Banfield"],
-    "1832": ["Lomas de Zamora", "Banfield"],
-    "1834": ["Temperley", "Turdera"],
-    "1836": ["Llavallol"],
-    "1842": ["Monte Grande", "Luis Guillón"],
-    "1870": ["Avellaneda Centro"],
-    "1846": ["Adrogué"]
+    "1173": ["Almagro"], "1428": ["Belgrano", "Colegiales"], "1218": ["Boedo"],
+    "1405": ["Caballito"], "1133": ["Constitución", "San Telmo", "Monserrat"],
+    "1406": ["Flores", "Parque Chacabuco"], "1407": ["Floresta", "Parque Avellaneda"],
+    "1408": ["Liniers"], "1437": ["Nueva Pompeya", "Parque Patricios"],
+    "1429": ["Núñez"], "1425": ["Palermo"], "1430": ["Saavedra", "Villa Pueyrredón"],
+    "1224": ["San Cristóbal"], "1001": ["San Nicolás"], "1414": ["Villa Crespo"],
+    "1417": ["Villa del Parque", "Villa General Mitre"], "1419": ["Villa Devoto"],
+    "1439": ["Villa Lugano"], "1431": ["Villa Urquiza"], "1824": ["Lanús", "Gerli"],
+    "1826": ["Remedios de Escalada"], "1828": ["Banfield"], "1832": ["Lomas de Zamora", "Banfield"],
+    "1834": ["Temperley", "Turdera"], "1836": ["Llavallol"], "1842": ["Monte Grande", "Luis Guillón"],
+    "1870": ["Avellaneda Centro"], "1846": ["Adrogué"]
   };
 
-  // Sincronizar automáticamente la ciudad si ya se calculó en el producto
   useEffect(() => {
     if (zipCod && CP_A_OPCIONES[zipCod]) {
-      // Por defecto elegimos la primera del array
       setAddress(prev => ({ ...prev, city: CP_A_OPCIONES[zipCod][0] }));
     }
   }, [zipCod]);
@@ -77,28 +43,19 @@ const CartDrawer = ({ isOpen, onClose }) => {
 
   const handleConfirmPurchase = async (e) => {
     e.preventDefault();
-
     setLoading(true);
     try {
       const userRaw = localStorage.getItem('user');
       const userData = JSON.parse(userRaw);
-
       const payload = {
-        // 1. Asegúrate de que el unit_price sea el precio del producto
         items: cart.map(item => ({
           id: item._id,
           title: item.name,
-          // Usamos el precio del producto de la DB. 
-          // Importante: Mercado Pago requiere números enteros o con decimales puntos.
           unit_price: Number(item.price),
           quantity: 1,
           currency_id: "ARS"
         })),
-
-        // 2. El costo de envío se envía aparte (si tu backend lo suma allá)
-        // O se puede agregar como un item más llamado "Envío"
         shippingCost: Number(shippingCost),
-
         userId: userData.id || userData._id,
         shippingAddress: {
           ...address,
@@ -106,7 +63,6 @@ const CartDrawer = ({ isOpen, onClose }) => {
           fullAddress: `${address.street} ${address.number}, ${address.city}`
         }
       };
-
       const response = await api.post('/payments/create-preference', payload);
       if (response.data.init_point) {
         window.location.href = response.data.init_point;
@@ -123,38 +79,41 @@ const CartDrawer = ({ isOpen, onClose }) => {
     <>
       {/* Overlay */}
       <div
-        className={`fixed inset-0 bg-black/40 z-60 transition-opacity duration-300 ${isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
+        className={`fixed inset-0 bg-black/40 z-100 transition-opacity duration-300 ${isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
         onClick={onClose}
       />
 
-      {/* Panel Lateral del Carrito */}
-      <div className={`fixed right-0 top-0 h-full w-full max-w-md bg-white z-70 shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      {/* Panel Lateral - FIX DE ALTURA Y GRID */}
+      <div className={`fixed right-0 top-0 h-vh w-full max-w-md bg-white z-110 shadow-2xl transform transition-transform duration-300 ease-in-out grid grid-rows-[auto_1fr_auto] ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
 
-        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+        {/* 1. HEADER (Fijo) */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-white">
           <h2 className="text-sm font-bold uppercase tracking-widest text-slate-800">Carrito de la compra</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-black transition-colors">
+          <button onClick={onClose} className="text-gray-400 hover:text-black p-2">
             <X size={24} strokeWidth={1.5} />
           </button>
         </div>
 
-        {/* Lista de productos */}
-        <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+        {/* 2. CONTENIDO (Scrollable) */}
+        <div className="overflow-y-auto touch-auto p-6 flex flex-col gap-6 custom-scrollbar bg-white">
           {cart.length === 0 ? (
-            <p className="text-center text-gray-500 mt-10 text-sm">Aún no se han añadido artículos al carrito</p>
+            <div className="flex flex-col items-center justify-center h-40">
+              <p className="text-center text-gray-500 text-sm italic">Aún no se han añadido artículos al carrito</p>
+            </div>
           ) : (
             cart.map((item) => (
-              <div key={item._id} className="flex gap-4 border-b border-gray-50 pb-4">
+              <div key={item._id} className="flex gap-4 border-b border-gray-50 pb-4 shrink-0">
                 <img
                   src={Array.isArray(item.image) ? item.image[0] : (item.image || "/placeholder.png")}
                   alt={item.name}
-                  className="w-20 h-20 object-cover rounded-lg"
+                  className="w-20 h-20 object-cover rounded-lg shadow-sm"
                 />
-                <div className="flex-1">
-                  <h3 className="text-sm font-medium text-slate-800 leading-snug">{item.name}</h3>
-                  <p className="text-sm font-bold mt-1">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-medium text-slate-800 leading-snug truncate">{item.name}</h3>
+                  <p className="text-sm font-bold mt-1 text-emerald-700">
                     {Number(item.price).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}
                   </p>
-                  <button onClick={() => removeFromCart(item._id)} className="text-xs text-gray-400 hover:text-red-500 flex items-center gap-1 mt-2 underline">
+                  <button onClick={() => removeFromCart(item._id)} className="text-xs text-red-400 hover:text-red-600 flex items-center gap-1 mt-2 underline transition-colors">
                     Eliminar
                   </button>
                 </div>
@@ -163,82 +122,81 @@ const CartDrawer = ({ isOpen, onClose }) => {
           )}
         </div>
 
-        {/* Resumen de costos */}
+        {/* 3. FOOTER (Fijo) */}
         {cart.length > 0 && (
-          <div className="p-6 bg-white border-t border-gray-100 space-y-3">
+          <div className="p-6 bg-slate-50 border-t border-gray-100 space-y-3 pb-safe">
             <div className="flex justify-between text-slate-500 text-sm">
               <span>Subtotal</span>
-              <span>${cartTotal.toLocaleString('es-AR')}</span>
+              <span className="font-semibold">${cartTotal.toLocaleString('es-AR')}</span>
             </div>
             <div className="flex justify-between text-slate-500 text-sm">
               <span>Envío ({address.city || "No seleccionado"})</span>
-              <span>{shippingCost > 0 ? `$ ${shippingCost.toLocaleString('es-AR')}` : shippingCost === 0 ? "Gratis" : "A calcular"}</span>
+              <span className="font-semibold">{shippingCost > 0 ? `$ ${shippingCost.toLocaleString('es-AR')}` : shippingCost === 0 ? "Gratis" : "A calcular"}</span>
             </div>
-            <div className="flex justify-between items-center pt-4 border-t border-gray-100 mb-6">
+            <div className="flex justify-between items-center pt-4 border-t border-gray-200 mb-4">
               <span className="text-lg font-serif text-slate-900">Total</span>
-              <span className="text-xl font-bold italic text-slate-900">
+              <span className="text-xl font-bold text-slate-900">
                 {(cartTotal + (shippingCost || 0)).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}
               </span>
             </div>
             <button
               onClick={preCheckout}
               disabled={loading}
-              className="w-full bg-[#007f5f] text-white py-4 rounded-md font-bold uppercase tracking-widest hover:bg-[#00664d] transition-all disabled:opacity-50"
+              className="w-full bg-[#007f5f] text-white py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-[#00664d] transition-all disabled:opacity-50 shadow-md active:scale-95"
             >
               {loading ? "Cargando..." : "Ir al Pago"}
             </button>
           </div>
         )}
 
-        {/* Modal de Dirección */}
+        {/* Modal de Dirección - Ajustado para scroll en móviles */}
         {isAddressModalOpen && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-9999 flex items-center justify-center p-4">
-            <div className="bg-white rounded-[2.5rem] p-8 md:p-12 max-w-2xl w-full shadow-2xl relative">
-              <h2 className="text-4xl font-serif text-slate-800 text-center mb-10">Detalles de Entrega</h2>
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-200 flex items-center justify-center p-4">
+            <div className="bg-white rounded-4xl p-6 md:p-10 max-w-lg w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+              <h2 className="text-2xl font-serif text-slate-800 text-center mb-6">Detalles de Entrega</h2>
 
-              <form onSubmit={handleConfirmPurchase} className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  <div className="md:col-span-3">
-                    <label className="text-xs font-bold text-slate-400 uppercase mb-2 block">Calle</label>
+              <form onSubmit={handleConfirmPurchase} className="space-y-6">
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="col-span-3">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Calle</label>
                     <input
                       required
                       type="text"
-                      className="w-full border-b-2 border-slate-100 py-3 outline-none focus:border-[#007f5f] text-lg"
+                      className="w-full border-b border-slate-200 py-2 outline-none focus:border-[#007f5f] text-base"
                       placeholder="Ej: Av. Meeks"
                       value={address.street}
                       onChange={(e) => setAddress({ ...address, street: e.target.value })}
                     />
                   </div>
-                  <div className="md:col-span-1">
-                    <label className="text-xs font-bold text-slate-400 uppercase mb-2 block">Nro</label>
+                  <div className="col-span-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Nro</label>
                     <input
                       required
                       type="number"
-                      className="w-full border-b-2 border-slate-100 py-3 outline-none focus:border-[#007f5f] text-lg text-center"
+                      className="w-full border-b border-slate-200 py-2 outline-none focus:border-[#007f5f] text-base text-center"
                       value={address.number}
                       onChange={(e) => setAddress({ ...address, number: e.target.value })}
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-bold text-slate-400 uppercase mb-2 block">Tipo de Vivienda</label>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Vivienda</label>
                     <select
-                      className="w-full border-b-2 border-slate-100 py-3 outline-none focus:border-[#007f5f] bg-transparent"
+                      className="w-full border-b border-slate-200 py-2 outline-none focus:border-[#007f5f] bg-transparent text-sm"
                       value={address.type}
                       onChange={(e) => setAddress({ ...address, type: e.target.value })}
                     >
                       <option value="casa">Casa</option>
-                      <option value="depto">Departamento / PH</option>
+                      <option value="depto">Depto / PH</option>
                     </select>
                   </div>
-
-                  <div className="relative">
-                    <label className="text-xs font-bold text-slate-400 uppercase mb-2 block">Localidad</label>
-                    {zipCod && CP_A_OPCIONES[zipCod]?.length > 1 ? (
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Localidad</label>
+                    {zipCod && CP_A_OPCIONES[zipCod] ? (
                       <select
-                        className="w-full border-b-2 border-slate-100 py-3 outline-none focus:border-[#007f5f] bg-white text-slate-700"
+                        className="w-full border-b border-slate-200 py-2 outline-none focus:border-[#007f5f] bg-white text-sm"
                         value={address.city}
                         onChange={(e) => setAddress({ ...address, city: e.target.value })}
                       >
@@ -247,20 +205,15 @@ const CartDrawer = ({ isOpen, onClose }) => {
                         ))}
                       </select>
                     ) : (
-                      <input
-                        readOnly
-                        className="w-full border-b-2 border-slate-100 py-3 bg-slate-50 text-slate-500 cursor-not-allowed"
-                        value={address.city}
-                      />
+                      <input readOnly className="w-full border-b border-slate-200 py-2 bg-slate-50 text-slate-400 text-sm" value={address.city} />
                     )}
-                    <p className="text-[10px] text-orange-400 mt-1">* Basado en el CP {zipCod}</p>
                   </div>
                 </div>
 
                 {address.type === 'depto' && (
-                  <div className="flex gap-6 p-5 bg-slate-50 rounded-2xl border border-slate-100">
+                  <div className="flex gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
                     <div className="flex-1">
-                      <label className="text-xs font-bold text-slate-400 uppercase mb-2 block">Piso</label>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Piso</label>
                       <input
                         required
                         type="text"
@@ -270,7 +223,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
                       />
                     </div>
                     <div className="flex-1">
-                      <label className="text-xs font-bold text-slate-400 uppercase mb-2 block">Depto</label>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Depto</label>
                       <input
                         required
                         type="text"
@@ -282,12 +235,12 @@ const CartDrawer = ({ isOpen, onClose }) => {
                   </div>
                 )}
 
-                <div className="flex flex-col md:flex-row items-center gap-4 mt-10">
-                  <button type="button" onClick={() => setIsAddressModalOpen(false)} className="w-full md:flex-1 py-4 text-slate-400 font-bold hover:text-slate-600">
-                    VOLVER
-                  </button>
-                  <button type="submit" disabled={loading} className="w-full md:flex-2 py-4 bg-[#007f5f] text-white font-bold rounded-2xl shadow-lg hover:bg-[#00664d] transition-all disabled:opacity-50">
+                <div className="flex flex-col gap-3 mt-8">
+                  <button type="submit" disabled={loading} className="w-full py-4 bg-[#007f5f] text-white font-bold rounded-xl shadow-lg hover:bg-[#00664d] transition-all disabled:opacity-50">
                     {loading ? "PROCESANDO..." : "CONFIRMAR COMPRA"}
+                  </button>
+                  <button type="button" onClick={() => setIsAddressModalOpen(false)} className="w-full py-2 text-slate-400 text-xs font-bold hover:text-slate-600 uppercase tracking-widest">
+                    Volver al carrito
                   </button>
                 </div>
               </form>
