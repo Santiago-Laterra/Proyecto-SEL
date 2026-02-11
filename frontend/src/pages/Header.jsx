@@ -3,14 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import api from '../services/api';
-
-import {
-  Search as SearchIcon,
-  User as UserIcon,
-  ShoppingBag,
-  X
-} from 'lucide-react';
-
+import { Search as SearchIcon, User as UserIcon, ShoppingBag, X, Menu } from 'lucide-react';
 import CartDrawer from '../components/CartDrawer';
 import UserDrawer from '../components/UserDrawer';
 
@@ -25,6 +18,7 @@ const Header = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [products, setProducts] = useState([]);
   const [filteredResults, setFilteredResults] = useState([]);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const cartCount = cart.length;
 
@@ -51,113 +45,201 @@ const Header = () => {
     }
   }, [searchTerm, products]);
 
+  // Función para manejar la navegación desde el buscador y limpiar estados
+  const handleSearchNavigation = (productId) => {
+    navigate(`/product/${productId}`);
+    setIsSearchOpen(false);
+    setSearchTerm("");
+  };
+
   return (
     <>
-      <nav className="flex justify-between items-center px-12 py-8 bg-white border-b border-gray-200 fixed w-full top-0 z-50">
+      <nav className="flex justify-between items-center px-6 md:px-12 py-5 md:py-8 bg-white border-b border-gray-100 fixed w-full top-0 z-50">
 
-        {/* LADO IZQUIERDO: Siempre el Logo */}
-        <div className="flex-none">
-          <Link to="/" className="text-[40px] font-serif tracking-tighter text-slate-900">
+        {/* --- MOBILE: Botón Hamburguesa --- */}
+        <div className="flex md:hidden flex-1">
+          <button onClick={() => setIsMenuOpen(true)} className="text-slate-700">
+            <Menu size={24} strokeWidth={1.5} />
+          </button>
+        </div>
+
+        {/* LOGO */}
+        <div className="flex-none text-center md:text-left">
+          <Link to="/" className="text-[30px] md:text-[40px] font-serif tracking-tighter text-slate-900">
             soleyah
           </Link>
         </div>
 
-        {/* LADO DERECHO: Contenedor de acciones con ancho controlado */}
-        <div className="flex items-center justify-end flex-1">
+        {/* LADO DERECHO: Acciones */}
+        <div className="flex items-center justify-end flex-1 gap-4 md:gap-5">
 
-          {isSearchOpen ? (
-            /* --- MODO BUSCADOR CHICO (A LA DERECHA) --- */
-            <div className="relative flex items-center animate-in fade-in slide-in-from-right-2 duration-300">
-              <div className="flex items-center border-b border-slate-900 w-70"> {/* Medida similar a los 260px + iconos */}
-                <SearchIcon className="text-slate-400 mr-2" size={16} strokeWidth={1.5} />
-                <input
-                  autoFocus
-                  type="text"
-                  placeholder="¿Qué estás buscando?"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full py-1 outline-none text-sm font-light tracking-wide placeholder:text-slate-300"
-                />
-                <button onClick={() => { setIsSearchOpen(false); setSearchTerm(""); }}>
-                  <X size={16} strokeWidth={1.5} className="text-slate-400 hover:text-slate-900 ml-2" />
-                </button>
-              </div>
+          {/* BUSCADOR (PC) */}
+          <div className="hidden md:flex items-center">
+            {isSearchOpen ? (
+              <div className="relative flex items-center animate-in fade-in slide-in-from-right-2 duration-300">
+                <div className="flex flex-col relative">
+                  <div className="flex items-center border-b border-slate-900 w-80">
+                    <SearchIcon className="text-slate-400 mr-2" size={16} strokeWidth={1.5} />
+                    <input
+                      autoFocus
+                      type="text"
+                      placeholder="¿Qué estás buscando?"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full py-1 outline-none text-sm font-light tracking-wide"
+                    />
+                    <button onClick={() => { setIsSearchOpen(false); setSearchTerm(""); }}>
+                      <X size={16} strokeWidth={1.5} className="text-slate-400 ml-2" />
+                    </button>
+                  </div>
 
-              {/* RESULTADOS PREDICTIVOS (Alineados al ancho del input) */}
-              {searchTerm && (
-                <div className="absolute top-full right-0 w-[320px] bg-white shadow-2xl rounded-b-md mt-2 max-h-87.5 overflow-y-auto border border-gray-100 z-110">
-                  {filteredResults.length > 0 ? (
-                    filteredResults.map(product => (
-                      <div
-                        key={product._id}
-                        onClick={() => {
-                          navigate(`/product/${product._id}`);
-                          setIsSearchOpen(false);
-                          setSearchTerm("");
-                        }}
-                        className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0 group"
-                      >
-                        <img src={product.image} alt="" className="w-10 h-10 object-cover rounded shadow-sm" />
-                        <div className="flex-1">
-                          <p className="text-[13px] font-medium text-slate-800 leading-tight">{product.name}</p>
-                          <p className="text-[11px] text-slate-400 italic">ARS {product.price.toLocaleString('es-AR')}</p>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="p-5 text-center text-slate-400 text-xs italic">
-                      Sin resultados para "{searchTerm}"
+                  {/* RESULTADOS PC */}
+                  {searchTerm && (
+                    <div className="absolute top-full left-0 w-full bg-white shadow-xl border border-gray-100 mt-2 z-50 max-h-100 overflow-y-auto">
+                      {filteredResults.length > 0 ? (
+                        filteredResults.map((product) => (
+                          <div
+                            key={product._id}
+                            onClick={() => handleSearchNavigation(product._id)}
+                            className="flex items-center gap-4 p-3 hover:bg-slate-50 transition-colors border-b border-gray-50 cursor-pointer"
+                          >
+                            <img
+                              src={Array.isArray(product.image) ? product.image[0] : product.image}
+                              alt={product.name}
+                              className="w-12 h-12 object-cover rounded"
+                            />
+                            <div>
+                              <p className="text-sm font-medium text-slate-800">{product.name}</p>
+                              <p className="text-xs text-slate-500">ARS {product.price.toLocaleString('es-AR')}</p>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="p-4 text-sm text-slate-400 text-center italic">No hay resultados</p>
+                      )}
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-
-          ) : (
-            /* --- MODO NAVEGACIÓN NORMAL --- */
-            <div className="flex items-center animate-in fade-in duration-500">
-              <div className="flex gap-8 text-[10.3px] uppercase tracking-[0.2em] font-medium text-slate-500 mr-10">
+              </div>
+            ) : (
+              <div className="flex items-center gap-8 text-[10.3px] uppercase tracking-[0.2em] font-medium text-slate-500 mr-10 font-['proxima-nova']">
                 <Link to="/" className="hover:text-slate-900 transition-colors">Shop</Link>
                 <Link to="/contact" className="hover:text-slate-900 transition-colors">Contact</Link>
                 {isAdmin && (
-                  <Link to="/admin" className="text-emerald-600 font-bold hover:text-emerald-700 transition-colors">
-                    Dashboard
-                  </Link>
+                  <Link to="/admin" className="text-emerald-600 font-bold hover:text-emerald-700">Dashboard</Link>
                 )}
               </div>
+            )}
+          </div>
 
-              <div className="flex gap-5 text-slate-700 border-l pl-10 border-gray-100">
-                <button onClick={() => setIsSearchOpen(true)} className="hover:text-slate-900 transition-transform hover:scale-110">
-                  <SearchIcon size={18} strokeWidth={1.2} />
+          {/* ICONOS ACCIÓN */}
+          <div className="flex items-center gap-4 md:gap-5 text-slate-700 md:border-l md:pl-10 border-gray-100">
+            <button onClick={() => setIsSearchOpen(true)} className="hover:text-slate-900 transition-transform hover:scale-110">
+              <SearchIcon size={20} md:size={18} strokeWidth={1.2} />
+            </button>
+
+            <div className="hidden md:block">
+              {user ? (
+                <button onClick={() => setIsUserOpen(true)} className="hover:text-slate-900 transition-transform hover:scale-110">
+                  <UserIcon size={18} strokeWidth={1.2} />
                 </button>
-
-                {user ? (
-                  <button onClick={() => setIsUserOpen(true)} className="hover:text-slate-900 transition-transform hover:scale-110">
-                    <UserIcon size={18} strokeWidth={1.2} />
-                  </button>
-                ) : (
-                  <Link to="/login" className="hover:text-slate-900 transition-transform hover:scale-110">
-                    <UserIcon size={18} strokeWidth={1.2} />
-                  </Link>
-                )}
-
-                <button onClick={() => setIsCartOpen(true)} className="hover:text-slate-900 relative transition-transform hover:scale-110">
-                  <ShoppingBag size={18} strokeWidth={1.2} />
-                  {cartCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center animate-bounce">
-                      {cartCount}
-                    </span>
-                  )}
-                </button>
-              </div>
+              ) : (
+                <Link to="/login" className="hover:text-slate-900 transition-transform hover:scale-110">
+                  <UserIcon size={18} strokeWidth={1.2} />
+                </Link>
+              )}
             </div>
-          )}
+
+            <button onClick={() => setIsCartOpen(true)} className="hover:text-slate-900 relative transition-transform hover:scale-110">
+              <ShoppingBag size={20} md:size={18} strokeWidth={1.2} />
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
-      </nav >
+      </nav>
+
+      {/* --- OVERLAY BUSCADOR MOBILE (Corregido) --- */}
+      {isSearchOpen && (
+        <div className="fixed inset-0 bg-white z-110 p-6 flex flex-col md:hidden animate-in fade-in duration-200">
+          <div className="flex items-center gap-4 border-b border-slate-200 pb-2">
+            <SearchIcon size={20} className="text-slate-400" />
+            <input
+              autoFocus
+              type="text"
+              placeholder="¿Qué estás buscando?"
+              className="flex-1 outline-none text-lg font-light"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <button onClick={() => { setIsSearchOpen(false); setSearchTerm(""); }}>
+              <X size={24} className="text-slate-400" />
+            </button>
+          </div>
+
+          {/* LISTA DE RESULTADOS MOBILE */}
+          <div className="mt-4 overflow-y-auto flex-1">
+            {searchTerm && (
+              filteredResults.length > 0 ? (
+                filteredResults.map((product) => (
+                  <div
+                    key={product._id}
+                    onClick={() => handleSearchNavigation(product._id)}
+                    className="flex items-center gap-4 py-4 border-b border-gray-50 active:bg-gray-50"
+                  >
+                    <img
+                      src={Array.isArray(product.image) ? product.image[0] : product.image}
+                      alt={product.name}
+                      className="w-16 h-16 object-cover rounded shadow-sm"
+                    />
+                    <div className="flex-1">
+                      <p className="text-[15px] font-medium text-slate-800">{product.name}</p>
+                      <p className="text-sm text-slate-500">ARS {product.price.toLocaleString('es-AR')}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-center mt-10 text-slate-400 italic">No hay resultados para "{searchTerm}"</p>
+              )
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* --- MENÚ LATERAL MOBILE --- */}
+      {isMenuOpen && (
+        <div className="fixed inset-0 z-100 md:hidden">
+          <div className="absolute inset-0 bg-black/20" onClick={() => setIsMenuOpen(false)} />
+          <div className="absolute inset-y-0 left-0 w-[80%] bg-white p-10 flex flex-col animate-in slide-in-from-left duration-300">
+            <button onClick={() => setIsMenuOpen(false)} className="self-end mb-10">
+              <X size={28} strokeWidth={1} className="text-slate-400" />
+            </button>
+            <nav className="flex flex-col gap-8 text-[20px] font-['proxima-nova'] font-bold text-slate-800 tracking-tight">
+              <Link to="/" onClick={() => setIsMenuOpen(false)}>Shop</Link>
+              <Link to="/contact" onClick={() => setIsMenuOpen(false)}>Contact</Link>
+              {user ? (
+                <button onClick={() => { setIsUserOpen(true); setIsMenuOpen(false); }} className="text-left font-bold">
+                  Mi Cuenta
+                </button>
+              ) : (
+                <Link to="/login" onClick={() => setIsMenuOpen(false)}>Iniciar sesión</Link>
+              )}
+              {isAdmin && (
+                <Link to="/admin" onClick={() => setIsMenuOpen(false)} className="text-emerald-600 pt-4 border-t border-gray-100">
+                  Dashboard
+                </Link>
+              )}
+            </nav>
+          </div>
+        </div>
+      )}
 
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
       <UserDrawer isOpen={isUserOpen} onClose={() => setIsUserOpen(false)} user={user} />
-      <div className="h-28"></div>
+      <div className="h-20 md:h-28"></div>
     </>
   );
 };
