@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 
 const AdminDashboard = () => {
-  // 1. ESTADOS PRINCIPALES
   const [activeTab, setActiveTab] = useState('products');
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
@@ -13,25 +12,19 @@ const AdminDashboard = () => {
   const [filter, setFilter] = useState('all');
   const navigate = useNavigate();
 
-  // 2. ESTADOS DE EDICIÓN (PRODUCTOS)
   const [editingProduct, setEditingProduct] = useState(null);
   const [editName, setEditName] = useState("");
   const [editPrice, setEditPrice] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editStock, setEditStock] = useState("");
-  const [editImages, setEditImages] = useState([]); // URLs existentes
+  const [editImages, setEditImages] = useState([]);
   const [newFiles, setNewFiles] = useState([]);
-
-
-
-
 
   useEffect(() => {
     fetchProducts();
     fetchOrders();
   }, []);
 
-  // 3. CARGA DE DATOS
   const fetchProducts = async () => {
     try {
       const res = await api.get('/products');
@@ -53,16 +46,13 @@ const AdminDashboard = () => {
     }
   };
 
-  // 4. LÓGICA DE FILTRADO
   const filteredOrders = orders.filter(order => {
     if (filter === 'all') return true;
-    return order.status === filter; // 'paid', 'pending', 'rejected', 'cancelled'
+    return order.status === filter;
   });
 
-  // 5. EXPORTACIÓN A EXCEL (ADAPTATIVA)
   const exportOrdersToExcel = () => {
     if (filteredOrders.length === 0) return alert("No hay órdenes para exportar");
-
     const dataToExport = filteredOrders.map(order => ({
       ID_Pedido: order._id,
       Fecha: new Date(order.createdAt).toLocaleDateString(),
@@ -70,22 +60,15 @@ const AdminDashboard = () => {
       Email: order.user?.email || 'N/A',
       Total: order.totalAmount,
       Envio: order.shippingCost,
-      // Mapeo amigable para el Excel
-      Estado: order.status === 'paid' ? 'PAGADO' :
-        order.status === 'pending' ? 'PENDIENTE' :
-          order.status === 'rejected' ? 'RECHAZADO' : 'CANCELADO',
+      Estado: order.status === 'paid' ? 'PAGADO' : order.status === 'pending' ? 'PENDIENTE' : 'FALLIDO',
       Direccion: `${order.shippingAddress?.street} ${order.shippingAddress?.number}, ${order.shippingAddress?.city}`
     }));
-
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Ventas SeloYah");
-
-    const fileName = `Reporte_Ventas_${filter.toUpperCase()}_${new Date().toLocaleDateString()}.xlsx`;
-    XLSX.writeFile(workbook, fileName);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Ventas");
+    XLSX.writeFile(workbook, `Ventas_${filter}.xlsx`);
   };
 
-  // 6. ACCIONES DE PRODUCTOS
   const openEditModal = (product) => {
     setEditingProduct(product);
     setEditName(product.name);
@@ -93,7 +76,7 @@ const AdminDashboard = () => {
     setEditStock(product.stock || 0);
     setEditDescription(product.description || "");
     setEditImages(Array.isArray(product.image) ? product.image : [product.image]);
-    setNewFiles([]); // Reset de archivos nuevos
+    setNewFiles([]);
   };
 
   const handleUpdate = async () => {
@@ -104,11 +87,7 @@ const AdminDashboard = () => {
       data.append('price', editPrice);
       data.append('stock', editStock);
       data.append('description', editDescription);
-
-      // Mandamos las fotos que el admin decidió conservar
       data.append('existingImages', JSON.stringify(editImages));
-
-      // Mandamos las fotos nuevas si las hay
       newFiles.forEach(file => data.append('image', file));
 
       const token = localStorage.getItem('token');
@@ -118,7 +97,7 @@ const AdminDashboard = () => {
 
       setEditingProduct(null);
       fetchProducts();
-      alert("¡Producto actualizado con éxito! 🚀");
+      alert("¡Actualizado!");
     } catch (error) {
       alert("Error al actualizar");
     } finally {
@@ -127,93 +106,31 @@ const AdminDashboard = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("¿Estás segura de que querés borrar este producto?")) {
+    if (window.confirm("¿Borrar producto?")) {
       try {
         const token = localStorage.getItem('token');
-        await api.delete(`/products/${id}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        await api.delete(`/products/${id}`, { headers: { 'Authorization': `Bearer ${token}` } });
         fetchProducts();
-      } catch (error) {
-        alert("No se pudo eliminar");
-      }
+      } catch (error) { alert("Error"); }
     }
-  };
-
-  // 7. ACCIONES DE VENTAS
-  const handleDeleteOrder = async (id) => {
-    if (window.confirm("¿Estás segura de eliminar esta orden? No aparecerá más en el historial.")) {
-      try {
-        const token = localStorage.getItem('token');
-        await api.delete(`/products/orders/${id}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        fetchOrders();
-      } catch (error) {
-        alert("Error al eliminar orden");
-      }
-    }
-  };
-
-
-  const handleImportExcel = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    setLoading(true);
-
-    reader.onload = async (event) => {
-      try {
-        const data = event.target.result;
-        const workbook = XLSX.read(data, { type: 'binary' });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(sheet);
-
-        if (jsonData.length === 0) {
-          alert("El archivo está vacío");
-          setLoading(false);
-          return;
-        }
-
-        // Confirmación antes de procesar
-        if (window.confirm(`¿Estás segura de importar/actualizar ${jsonData.length} productos?`)) {
-          const token = localStorage.getItem('token');
-          await api.post('/products/import', jsonData, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-
-          alert("¡Base de datos actualizada con éxito! 🚀");
-          fetchProducts(); // Recargamos la lista
-        }
-      } catch (error) {
-        console.error("Error importando:", error);
-        alert("Hubo un error al procesar el Excel. Revisá el formato.");
-      } finally {
-        setLoading(false);
-        e.target.value = ""; // Limpiamos el input
-      }
-    };
-
-    reader.readAsBinaryString(file);
   };
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen pt-28">
+    /* pt-28 para dejar espacio al Header y pb-20 para el scroll final */
+    <div className="p-4 md:p-8 bg-gray-50 min-h-screen pt-28 pb-20">
       <div className="max-w-6xl mx-auto">
 
         {/* Selector de Pestañas */}
-        <div className="flex gap-4 mb-6">
+        <div className="flex gap-2 md:gap-4 mb-6 overflow-x-auto pb-2 no-scrollbar">
           <button
             onClick={() => setActiveTab('products')}
-            className={`flex items-center gap-2 px-6 py-2 rounded-full font-medium transition-all ${activeTab === 'products' ? 'bg-slate-800 text-white shadow-md' : 'bg-white text-slate-500 hover:bg-gray-100'}`}
+            className={`flex items-center gap-2 px-6 py-2 rounded-full font-medium whitespace-nowrap transition-all ${activeTab === 'products' ? 'bg-slate-800 text-white shadow-md' : 'bg-white text-slate-500 hover:bg-gray-100'}`}
           >
             <Package size={18} /> Productos
           </button>
           <button
             onClick={() => setActiveTab('orders')}
-            className={`flex items-center gap-2 px-6 py-2 rounded-full font-medium transition-all ${activeTab === 'orders' ? 'bg-slate-800 text-white shadow-md' : 'bg-white text-slate-500 hover:bg-gray-100'}`}
+            className={`flex items-center gap-2 px-6 py-2 rounded-full font-medium whitespace-nowrap transition-all ${activeTab === 'orders' ? 'bg-slate-800 text-white shadow-md' : 'bg-white text-slate-500 hover:bg-gray-100'}`}
           >
             <ShoppingBag size={18} /> Ventas {orders.length > 0 && <span className="bg-emerald-500 text-white text-[10px] px-1.5 rounded-full ml-1">{orders.length}</span>}
           </button>
@@ -221,235 +138,148 @@ const AdminDashboard = () => {
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           {/* Header Dinámico */}
-          <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white">
+          <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center bg-white gap-4">
             <div>
-              <h1 className="text-2xl font-serif text-slate-800">
+              <h1 className="text-2xl font-bold text-slate-800">
                 {activeTab === 'products' ? 'Gestión de Inventario' : 'Control de Ventas'}
               </h1>
               <p className="text-sm text-slate-500">
-                {activeTab === 'products' ? 'Administrá tus calendarios y diseños' : 'Revisá quién compró y gestioná los pedidos'}
+                {activeTab === 'products' ? 'Administrá tus productos' : 'Gestioná tus pedidos recibidos'}
               </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 w-full md:w-auto">
               {activeTab === 'products' ? (
-                <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-700 transition-all">
+                <button onClick={() => navigate('/dashboard')} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-slate-800 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-700">
                   <Plus size={18} /> Nuevo Producto
                 </button>
               ) : (
-                <button onClick={exportOrdersToExcel} className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-all">
-                  <FileSpreadsheet size={18} /> Descargar {filter === 'all' ? 'Todas' : filter === 'paid' ? 'Pagadas' : 'Pendientes'} (.xlsx)
+                <button onClick={exportOrdersToExcel} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-emerald-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-emerald-700">
+                  <FileSpreadsheet size={18} /> Exportar Excel
                 </button>
               )}
             </div>
           </div>
 
-          {/* Filtros de Estado (Solo visibles en Ventas) */}
+          {/* Filtros de Ventas */}
           {activeTab === 'orders' && (
-            <div className="flex flex-wrap gap-3 p-6 bg-gray-50/50 border-b border-gray-100">
-              <button
-                onClick={() => setFilter('all')}
-                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${filter === 'all' ? 'bg-slate-800 text-white' : 'bg-white text-slate-500 border border-gray-200'}`}
-              >
-                Todas ({orders.length})
-              </button>
-              <button
-                onClick={() => setFilter('paid')}
-                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${filter === 'paid' ? 'bg-[#007f5f] text-white' : 'bg-white text-slate-500 border border-gray-200'}`}
-              >
-                Pagadas ({orders.filter(o => o.status === 'paid').length})
-              </button>
-              <button
-                onClick={() => setFilter('pending')}
-                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${filter === 'pending' ? 'bg-amber-500 text-white' : 'bg-white text-slate-500 border border-gray-200'}`}
-              >
-                Pendientes ({orders.filter(o => o.status === 'pending').length})
-              </button>
-              <button
-                onClick={() => setFilter('rejected')}
-                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${filter === 'rejected' ? 'bg-red-600 text-white' : 'bg-white text-slate-500 border border-gray-200'}`}
-              >
-                Rechazadas/Fallas ({orders.filter(o => o.status === 'rejected' || o.status === 'cancelled').length})
-              </button>
+            <div className="flex flex-wrap gap-2 p-4 bg-gray-50/50 border-b border-gray-100">
+              {['all', 'paid', 'pending', 'rejected'].map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${filter === f ? 'bg-slate-800 text-white' : 'bg-white text-slate-500 border border-gray-200'}`}
+                >
+                  {f === 'all' ? 'Todas' : f === 'paid' ? 'Pagadas' : f === 'pending' ? 'Pendientes' : 'Fallidas'}
+                </button>
+              ))}
             </div>
           )}
 
-          {/* Contenido de la Tabla */}
+          {/* Tabla con Scroll Horizontal */}
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              {activeTab === 'products' ? (
-                <>
-                  <thead className="bg-gray-50 text-slate-500 text-xs uppercase tracking-widest border-b border-gray-100">
-                    <tr>
-                      <th className="px-6 py-4 font-semibold">Producto</th>
-                      <th className="px-6 py-4 font-semibold">Precio</th>
-                      <th className="px-6 py-4 font-semibold text-right">Acciones</th>
+            <table className="w-full text-left min-w-150">
+              <thead className="bg-gray-50 text-slate-500 text-xs uppercase tracking-widest border-b">
+                <tr>
+                  <th className="px-6 py-4 font-semibold">{activeTab === 'products' ? 'Producto' : 'Cliente / ID'}</th>
+                  <th className="px-6 py-4 font-semibold">{activeTab === 'products' ? 'Precio' : 'Total'}</th>
+                  <th className="px-6 py-4 font-semibold">{activeTab === 'products' ? 'Stock' : 'Estado'}</th>
+                  <th className="px-6 py-4 font-semibold text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {activeTab === 'products' ? (
+                  products.map((p) => (
+                    <tr key={p._id} className="hover:bg-gray-50/50">
+                      <td className="px-6 py-4 flex items-center gap-3">
+                        <img src={Array.isArray(p.image) ? p.image[0] : p.image} alt="" className="w-10 h-10 rounded object-cover shadow-sm" />
+                        <span className="font-medium text-slate-700 text-sm">{p.name}</span>
+                      </td>
+                      <td className="px-6 py-4 text-sm font-bold text-slate-900">${p.price.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-sm text-slate-500">{p.stock}</td>
+                      <td className="px-6 py-4 text-right flex justify-end gap-2">
+                        <button onClick={() => openEditModal(p)} className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg"><Pencil size={18} /></button>
+                        <button onClick={() => handleDelete(p._id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={18} /></button>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {products.map((product) => (
-                      <tr key={product._id} className="hover:bg-gray-50/50 transition-colors">
-                        <td className="px-6 py-4 flex items-center gap-4">
-                          <img src={Array.isArray(product.image) ? product.image[0] : product.image} alt="" className="w-12 h-12 rounded-lg object-cover border border-gray-100" />
-                          <span className="font-medium text-slate-700">{product.name}</span>
-                        </td>
-                        <td className="px-6 py-4 text-slate-600 font-medium italic">
-                          {Number(product.price).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex justify-end gap-2">
-                            <button onClick={() => openEditModal(product)} className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"><Pencil size={18} /></button>
-                            <button onClick={() => handleDelete(product._id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={18} /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </>
-              ) : (
-                <>
-                  <thead className="bg-gray-50 text-slate-500 text-xs uppercase tracking-widest border-b border-gray-100">
-                    <tr>
-                      <th className="px-6 py-4 font-semibold">Cliente / ID</th>
-                      <th className="px-6 py-4 font-semibold">Monto Total</th>
-                      <th className="px-6 py-4 font-semibold">Estado</th>
-                      <th className="px-6 py-4 font-semibold">Fecha</th>
-                      <th className="px-6 py-4 font-semibold text-right">Acciones</th>
+                  ))
+                ) : (
+                  filteredOrders.map((o) => (
+                    <tr key={o._id} className="hover:bg-gray-50/50">
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-medium text-slate-700">{o.user?.name || 'Invitado'}</div>
+                        <div className="text-[10px] text-slate-400 font-mono">...{o._id.slice(-6)}</div>
+                      </td>
+                      <td className="px-6 py-4 text-sm font-bold">${o.totalAmount.toLocaleString()}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${o.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                          {o.status.toUpperCase()}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button onClick={() => handleDeleteOrder(o._id)} className="p-2 text-slate-300 hover:text-red-600"><Trash2 size={18} /></button>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {filteredOrders.length > 0 ? (
-                      filteredOrders.map((order) => (
-                        <tr key={order._id} className="hover:bg-gray-50/50 transition-colors">
-                          <td className="px-6 py-4">
-                            <div className="font-medium text-slate-700">{order.user?.name || 'Invitado'}</div>
-                            <div className="text-[10px] text-slate-400 font-mono uppercase">{order._id.slice(-8)}...</div>
-                          </td>
-                          <td className="px-6 py-4 text-slate-900 font-bold">
-                            ${order.totalAmount.toLocaleString('es-AR')}
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className={`px-2 py-1 rounded-full text-[10px] font-bold tracking-wider ${order.status === 'paid' ? 'bg-green-100 text-green-700' :
-                              order.status === 'pending' ? 'bg-amber-100 text-amber-700' :
-                                'bg-red-100 text-red-700'
-                              }`}>
-                              {order.status === 'paid' ? 'PAGADO' :
-                                order.status === 'pending' ? 'PENDIENTE' :
-                                  order.status === 'rejected' ? 'FALLIDO' : 'CANCELADO'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-slate-500">
-                            {new Date(order.createdAt).toLocaleDateString()}
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <button
-                              onClick={() => handleDeleteOrder(order._id)}
-                              className="p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                              title="Eliminar orden"
-                            >
-                              <Trash2 size={18} />
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="5" className="px-6 py-12 text-center text-slate-400 italic text-sm">
-                          No se encontraron órdenes en esta categoría.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </>
-              )}
+                  ))
+                )}
+              </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      {/* --- MODAL DE EDICIÓN --- */}
+      {/* --- MODAL DE EDICIÓN CORREGIDO --- */}
       {editingProduct && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-999 flex items-center justify-center p-4">
-          <div
-            className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header Fijo */}
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white">
-              <h2 className="text-2xl font-serif text-slate-800">Editar Producto</h2>
-              <button onClick={() => setEditingProduct(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400">
-                <X size={24} />
-              </button>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-1000 flex items-center justify-center p-2 md:p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh]">
+            <div className="p-5 border-b flex justify-between items-center">
+              <h2 className="text-xl font-bold text-slate-800">Editar Producto</h2>
+              <button onClick={() => setEditingProduct(null)} className="p-2 hover:bg-gray-100 rounded-full"><X size={20} /></button>
             </div>
 
-            {/* Contenido con Scroll Propio */}
-            <div className="p-8 overflow-y-auto space-y-6 custom-scrollbar">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-6 overflow-y-auto space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Nombre</label>
-                  <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full border-b-2 py-2 outline-none focus:border-emerald-500 transition-colors bg-transparent text-slate-700 font-medium" />
+                  <label className="text-[10px] font-bold text-slate-400 uppercase">Nombre</label>
+                  <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full border-b py-2 outline-none focus:border-emerald-500" />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Precio</label>
-                    <input type="number" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} className="w-full border-b-2 py-2 outline-none focus:border-emerald-500 transition-colors bg-transparent" />
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase">Precio</label>
+                    <input type="number" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} className="w-full border-b py-2 outline-none" />
                   </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Stock</label>
-                    <input type="number" value={editStock} onChange={(e) => setEditStock(e.target.value)} className="w-full border-b-2 py-2 outline-none focus:border-emerald-500 transition-colors bg-transparent" />
+                  <div className="flex-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase">Stock</label>
+                    <input type="number" value={editStock} onChange={(e) => setEditStock(e.target.value)} className="w-full border-b py-2 outline-none" />
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Descripción</label>
-                <textarea
-                  value={editDescription}
-                  onChange={(e) => setEditDescription(e.target.value)}
-                  className="w-full border-2 border-gray-100 rounded-xl p-3 mt-2 outline-none focus:border-emerald-500 h-28 resize-none text-sm text-slate-600 leading-relaxed"
-                  placeholder="Escribí una descripción matadora..."
-                />
+                <label className="text-[10px] font-bold text-slate-400 uppercase">Descripción</label>
+                <textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} className="w-full border rounded-lg p-2 mt-1 h-24 resize-none text-sm" />
               </div>
 
               <div>
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Galería de Imágenes</label>
-                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3 mt-3">
+                <label className="text-[10px] font-bold text-slate-400 uppercase">Imágenes</label>
+                <div className="grid grid-cols-4 gap-2 mt-2">
                   {editImages.map((img, idx) => (
-                    <div key={idx} className="relative aspect-square group">
-                      <img src={img} className="w-full h-full object-cover rounded-xl border border-gray-100 shadow-sm" />
-                      <button
-                        onClick={() => setEditImages(editImages.filter((_, i) => i !== idx))}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X size={12} />
-                      </button>
+                    <div key={idx} className="relative aspect-square">
+                      <img src={img} className="w-full h-full object-cover rounded-lg border" />
+                      <button onClick={() => setEditImages(editImages.filter((_, i) => i !== idx))} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5"><X size={10} /></button>
                     </div>
                   ))}
-                  <label className="aspect-square border-2 border-dashed border-gray-200 flex flex-col items-center justify-center rounded-xl cursor-pointer hover:bg-emerald-50 hover:border-emerald-200 transition-all text-gray-400 hover:text-emerald-500">
-                    <Plus size={24} />
-                    <span className="text-[9px] font-bold uppercase mt-1">Subir</span>
+                  <label className="aspect-square border-2 border-dashed border-gray-200 flex flex-col items-center justify-center rounded-lg cursor-pointer hover:bg-gray-50 text-gray-400">
+                    <Plus size={20} />
                     <input type="file" className="hidden" multiple onChange={(e) => setNewFiles([...newFiles, ...e.target.files])} />
                   </label>
                 </div>
-                {newFiles.length > 0 && (
-                  <div className="mt-3 flex items-center gap-2 text-emerald-600 bg-emerald-50 w-fit px-3 py-1 rounded-full text-[10px] font-bold">
-                    <RefreshCw size={12} className="animate-spin" />
-                    {newFiles.length} FOTOS NUEVAS LISTAS
-                  </div>
-                )}
               </div>
             </div>
 
-            {/* Footer Fijo */}
-            <div className="p-6 border-t border-gray-50 bg-gray-50/50 flex gap-3">
-              <button onClick={() => setEditingProduct(null)} className="flex-1 py-3 text-slate-500 font-bold hover:bg-gray-100 rounded-xl transition-colors">
-                Descartar
-              </button>
-              <button
-                onClick={handleUpdate}
-                disabled={loading}
-                className="flex-1 py-3 bg-slate-800 text-white font-bold rounded-xl shadow-xl hover:bg-slate-700 transition-all active:scale-95 disabled:opacity-50"
-              >
-                {loading ? 'Guardando...' : 'Actualizar Producto'}
+            <div className="p-4 bg-gray-50 border-t flex gap-3">
+              <button onClick={() => setEditingProduct(null)} className="flex-1 py-2.5 font-bold text-slate-500">Cancelar</button>
+              <button onClick={handleUpdate} disabled={loading} className="flex-1 py-2.5 bg-slate-800 text-white font-bold rounded-lg disabled:opacity-50">
+                {loading ? 'Guardando...' : 'Guardar Cambios'}
               </button>
             </div>
           </div>
@@ -457,5 +287,6 @@ const AdminDashboard = () => {
       )}
     </div>
   );
-}
+};
+
 export default AdminDashboard;
