@@ -22,7 +22,6 @@ const Register = () => {
 
     try {
       const userData = {
-        // CAMBIAMOS 'username' POR 'name' QUE ES LO QUE PIDE TU BACKEND
         name: `${formData.firstName} ${formData.lastName}`.trim(),
         email: formData.email.toLowerCase(),
         password: formData.password
@@ -43,8 +42,9 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-[80vh] bg-white flex flex-col items-center pt-24 px-4">
-      <div className="w-full max-w-125">
+    /* Cambiado min-h-[80vh] por min-h-screen y añadido pb-20 para que no se corte al final */
+    <div className="min-h-screen bg-white flex flex-col items-center pt-24 pb-20 px-4">
+      <div className="w-full max-w-md"> {/* max-w-125 no es estándar en Tailwind, usamos max-w-md que es similar */}
         <h1 className="text-[32px] font-normal text-[#111] text-center mb-4">Crear cuenta de cliente</h1>
         <p className="text-gray-500 text-[15px] text-center mb-10 leading-relaxed">
           Cree una cuenta de cliente para guardar todos sus pedidos en un solo lugar
