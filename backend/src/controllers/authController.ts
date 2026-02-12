@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { User } from '../model/userModel';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken'
+import crypto from 'crypto';
+
 
 const register = async (req: Request, res: Response) => {
 
@@ -95,4 +97,39 @@ const login = async (req: Request, res: Response) => {
   }
 };
 
-export { register, login }
+const forgotPassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email } = req.body;
+
+    // 1. Verificar si el usuario existe
+    const user = await User.findOne({ email });
+    if (!user) {
+      // Por seguridad, a veces es mejor decir que se envió el mail 
+      // incluso si no existe, para no dar pistas a hackers.
+      res.status(404).json({ message: "No existe un usuario con ese correo." });
+      return;
+    }
+
+    // 2. Generar un token aleatorio
+    const resetToken = crypto.randomBytes(32).toString('hex');
+
+    // 3. Hashear el token y guardarlo (opcional, pero más seguro) 
+    // o guardarlo tal cual con una expiración de 1 hora
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hora desde ahora
+
+    await user.save();
+
+    // 4. Enviar el mail (esto lo haremos en el paso 2)
+    const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
+
+    console.log("Token generado:", resetToken); // Solo para pruebas
+    // await sendResetEmail(user.email, resetUrl);
+
+    res.status(200).json({ message: "Link de recuperación enviado al correo." });
+  } catch (error) {
+    res.status(500).json({ message: "Error en el servidor", error });
+  }
+};
+
+export { register, login, forgotPassword }
