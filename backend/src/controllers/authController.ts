@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken'
 import crypto from 'crypto';
 
 
+
 const register = async (req: Request, res: Response) => {
 
   try {
@@ -132,4 +133,36 @@ const forgotPassword = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export { register, login, forgotPassword }
+const resetPassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { token } = req.params; // El token vendrá en la URL
+    const { password } = req.body;
+
+    // 1. Buscar al usuario que tenga ese token y que no haya expirado
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: new Date() }, // $gt significa "greater than" (mayor que ahora)
+    });
+
+    if (!user) {
+      res.status(400).json({ message: "El token es inválido o ha expirado." });
+      return;
+    }
+
+    // 2. Encriptar la nueva contraseña
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(password, salt);
+
+    // 3. Limpiar los campos de recuperación
+    (user as any).resetPasswordToken = null;
+    (user as any).resetPasswordExpires = null;
+
+    await user.save();
+
+    res.status(200).json({ message: "Contraseña actualizada con éxito. Ya puedes iniciar sesión." });
+  } catch (error) {
+    res.status(500).json({ message: "Error al restablecer la contraseña.", error });
+  }
+};
+
+export { register, login, forgotPassword, resetPassword }
