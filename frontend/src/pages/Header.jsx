@@ -222,9 +222,13 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Drawers Externos */}
-      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
-      <UserDrawer isOpen={isUserOpen} onClose={() => setIsUserOpen(false)} user={user} />
+      {createPortal(
+        <>
+          <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+          <UserDrawer isOpen={isUserOpen} onClose={() => setIsUserOpen(false)} user={user} />
+        </>,
+        document.body
+      )}
 
       {/* Spacer para que el contenido no quede debajo del Nav fijo */}
       <div className="h-18.5 md:h-26"></div>

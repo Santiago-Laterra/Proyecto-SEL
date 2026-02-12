@@ -56,9 +56,13 @@ body {
 }
 
 /* Evita que el cuerpo del sitio se mueva cuando el carrito está abierto */
-body:has(.invisible) {
-  overflow: auto;
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  /* Evita el rebote elástico en iOS que a veces esconde el footer */
+  overscroll-behavior-y: none; 
 }
-body:has(.visible) {
+body.drawer-open {
   overflow: hidden;
 }
