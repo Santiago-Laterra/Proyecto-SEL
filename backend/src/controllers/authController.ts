@@ -3,7 +3,7 @@ import { User } from '../model/userModel';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken'
 import crypto from 'crypto';
-
+import { sendResetEmail } from '../services/emailServices';
 
 
 const register = async (req: Request, res: Response) => {
@@ -125,7 +125,7 @@ const forgotPassword = async (req: Request, res: Response): Promise<void> => {
     const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
 
     console.log("Token generado:", resetToken); // Solo para pruebas
-    // await sendResetEmail(user.email, resetUrl);
+    await sendResetEmail(user.email, resetUrl);
 
     res.status(200).json({ message: "Link de recuperación enviado al correo." });
   } catch (error) {

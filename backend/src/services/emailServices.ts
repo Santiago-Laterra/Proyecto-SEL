@@ -28,3 +28,5 @@ export const sendResetEmail = async (email: string, resetUrl: string) => {
 
   await transporter.sendMail(mailOptions);
 };
+
+export { sendResetEmail }
