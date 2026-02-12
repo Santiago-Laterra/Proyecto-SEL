@@ -8,4 +8,6 @@ export interface IUser extends Document {
   lastSessionId: string;
   role: 'admin' | 'client'; // Esto evita que pongas cualquier otro texto
   createdAt: Date;
+  resetPasswordToken: String,
+  resetPasswordExpires: Date
 }
