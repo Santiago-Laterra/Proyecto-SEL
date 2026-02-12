@@ -1,6 +1,19 @@
 @import "tailwindcss";
 /* src/index.css */
 
+#root + div, 
+body > div[style*="fixed"] {
+    touch-action: none; /* Evita rebotes raros en mobile */
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 10px;
+}
+
 /* Opcional: Aplicarla por defecto a todo el cuerpo para un look consistente */
 body {
     font-family: "proxima-nova", sans-serif;
@@ -35,4 +48,17 @@ body {
 
 .admin-select:focus {
   @apply border-[#007f5f];
+}
+
+.h-dvh {
+  height: 100vh; /* fallback */
+  height: 100dvh; 
+}
+
+/* Evita que el cuerpo del sitio se mueva cuando el carrito está abierto */
+body:has(.invisible) {
+  overflow: auto;
+}
+body:has(.visible) {
+  overflow: hidden;
 }

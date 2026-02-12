@@ -79,6 +79,29 @@ const AdminDashboard = () => {
     setNewFiles([]);
   };
 
+  const handleDeleteOrder = async (id) => {
+    if (window.confirm("¿Estás seguro de eliminar este registro de venta?")) {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('token');
+
+        // Usamos la ruta de órdenes, no la de productos
+        await api.delete(`/products/orders/${id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        // Actualizamos la lista local eliminando la orden borrada
+        setOrders(orders.filter(order => order._id !== id));
+        alert("Orden eliminada correctamente");
+      } catch (error) {
+        console.error("Error al borrar orden:", error);
+        alert("No se pudo eliminar la orden. Revisa los permisos del admin.");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   const handleUpdate = async () => {
     try {
       setLoading(true);
