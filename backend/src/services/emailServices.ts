@@ -9,10 +9,17 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASS, // owyjteqrtxmegbh
   },
   // Mantenemos los timeouts para que no se cuelgue la instancia gratuita
-  connectionTimeout: 10000,
-  greetingTimeout: 5000,
-  socketTimeout: 10000,
+  connectionTimeout: 10000
 });
+
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("❌ Error de configuración de correo:", error);
+  } else {
+    console.log("🚀 Servidor listo para enviar correos!");
+  }
+});
+
 export const sendResetEmail = async (email: string, resetUrl: string) => {
   console.log("🚀 Iniciando proceso de envío de mail a:", email);
 
