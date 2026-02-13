@@ -1,47 +1,32 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
-// Para desarrollo, te recomiendo usar Mailtrap.io o una App Password de Gmail
-// En emailServices.ts
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false, // OBLIGATORIO: false para puerto 587
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  tls: {
-    // Esto ayuda a que Render no bloquee la conexión si el certificado tiene algún hipo
-    rejectUnauthorized: false
-  },
-  connectionTimeout: 10000,
-});
-
-transporter.verify((error, success) => {
-  if (error) {
-    console.error("❌ Error de configuración de correo:", error);
-  } else {
-    console.log("🚀 Servidor listo para enviar correos!");
-  }
-});
+// Usamos la nueva variable que pondremos en Render
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const sendResetEmail = async (email: string, resetUrl: string) => {
-  console.log("🚀 Iniciando proceso de envío de mail a:", email);
-
-  const mailOptions = {
-    from: `"Soleyah" <${process.env.EMAIL_USER}>`,
-    to: email,
-    subject: 'Recuperación de contraseña - Soleyah',
-    html: `<p>Haz clic aquí para resetear: <a href="${resetUrl}">${resetUrl}</a></p>`,
-  };
+  console.log("🚀 Enviando mail vía API de Resend a:", email);
 
   try {
-    console.log("⏳ Intentando conectar con Gmail...");
-    const info = await transporter.sendMail(mailOptions);
-    console.log("✅ Mail enviado con éxito! ID:", info.messageId);
-    return info;
+    const data = await resend.emails.send({
+      from: 'SeloYah <onboarding@resend.dev>', // Dominio temporal de prueba
+      to: email,
+      subject: 'Recuperación de contraseña - SeloYah',
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px;">
+          <h2 style="color: #333;">Restablecer Contraseña</h2>
+          <p>Hola, haz solicitado un cambio de clave para tu cuenta en Soleyah.</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetUrl}" style="background-color: #000; color: #fff; padding: 15px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">CAMBIAR CONTRASEÑA</a>
+          </div>
+          <p style="font-size: 12px; color: #666;">Si no realizaste esta solicitud, puedes ignorar este correo de forma segura.</p>
+        </div>
+      `,
+    });
+
+    console.log("✅ Mail entregado a la cola de Resend:", data);
+    return data;
   } catch (error) {
-    console.error("❌ ERROR CRÍTICO enviando el mail:", error);
-    throw error; // Lanzamos el error para que el controlador lo atrape
+    console.error("❌ Falló el envío por API:", error);
+    throw error;
   }
 };
