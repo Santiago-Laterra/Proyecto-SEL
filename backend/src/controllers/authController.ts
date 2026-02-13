@@ -105,9 +105,9 @@ const forgotPassword = async (req: Request, res: Response): Promise<void> => {
     // 1. Verificar si el usuario existe
     const user = await User.findOne({ email });
     if (!user) {
-      // Por seguridad, a veces es mejor decir que se envió el mail 
-      // incluso si no existe, para no dar pistas a hackers.
-      res.status(404).json({ message: "No existe un usuario con ese correo." });
+      // En lugar de 404, devolvemos 200 con el mismo mensaje de éxito.
+      // Así el atacante no sabe si el mail existe o no.
+      res.status(200).json({ message: "Si el correo coincide con una cuenta, recibirás un link de recuperación en breve." });
       return;
     }
 
