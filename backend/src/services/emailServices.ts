@@ -3,13 +3,18 @@ import nodemailer from 'nodemailer';
 // Para desarrollo, te recomiendo usar Mailtrap.io o una App Password de Gmail
 // En emailServices.ts
 const transporter = nodemailer.createTransport({
-  service: "gmail", // Con esto, Nodemailer autoconfigura host y puerto
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false, // OBLIGATORIO: false para puerto 587
   auth: {
-    user: process.env.EMAIL_USER, // seloyahtienda@gmail.com
-    pass: process.env.EMAIL_PASS, // owyjteqrtxmegbh
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
-  // Mantenemos los timeouts para que no se cuelgue la instancia gratuita
-  connectionTimeout: 10000
+  tls: {
+    // Esto ayuda a que Render no bloquee la conexión si el certificado tiene algún hipo
+    rejectUnauthorized: false
+  },
+  connectionTimeout: 10000,
 });
 
 transporter.verify((error, success) => {
