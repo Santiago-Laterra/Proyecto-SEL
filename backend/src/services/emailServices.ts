@@ -12,7 +12,6 @@ const transporter = nodemailer.createTransport({
   },
   tls: {
     // Esto es lo que evita el error de "wrong version number"
-    ciphers: 'SSLv3',
     rejectUnauthorized: false
   }
 });

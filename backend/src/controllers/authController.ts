@@ -122,7 +122,7 @@ const forgotPassword = async (req: Request, res: Response): Promise<void> => {
     await user.save();
 
     // 4. Enviar el mail (esto lo haremos en el paso 2)
-    const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
+    const resetUrl = `https://seloyah.vercel.app/reset-password/${resetToken}`;
 
     console.log("Token generado:", resetToken); // Solo para pruebas
 
