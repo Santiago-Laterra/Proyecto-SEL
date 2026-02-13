@@ -12,7 +12,9 @@ const PORT = process.env.PORT
 
 const app = express()
 app.use(cors({
-  origin: 'https://seloyah.vercel.app' // Tu URL de Vercel
+  origin: 'https://seloyah.vercel.app', // Tu URL de Vercel
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
