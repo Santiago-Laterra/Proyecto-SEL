@@ -10,10 +10,6 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
-  tls: {
-    // Esto es lo que evita el error de "wrong version number"
-    rejectUnauthorized: false
-  }
 });
 
 export const sendResetEmail = async (email: string, resetUrl: string) => {
