@@ -142,38 +142,37 @@ const ProductDetails = () => {
     setCalculating(true);
 
     setTimeout(() => {
-      // 1. Traducimos el CP a Nombre de Localidad (ej: "1439" -> "Villa Lugano")
       const nombreLocalidad = CP_A_LOCALIDAD[zipCode];
-
+      console.log("CP ingresado:", zipCode, "Localidad detectada:", nombreLocalidad); // Para debugear
 
       if (!nombreLocalidad) {
         alert("Lo sentimos, por el momento no realizamos envíos a esta zona.");
         setShippingCost(null);
-        if (clearShipping) clearShipping(); // Limpiamos cualquier rastro previo
+        if (clearShipping) clearShipping();
         setCalculating(false);
         return;
       }
 
-      // 2. Buscamos los KM usando el nombre obtenido, o el DEFAULT si no existe
       const km = DISTANCIAS_KM[nombreLocalidad] !== undefined
         ? DISTANCIAS_KM[nombreLocalidad]
         : DISTANCIAS_KM["DEFAULT"];
 
       let costoFinal = 0;
 
-      if (km > 0) {
+      // REGLA DE ORO: Si es 1439 y Villa Lugano, el costo es 0
+      if (zipCode === "1439" && nombreLocalidad === "Villa Lugano") {
+        costoFinal = 0;
+      } else if (km > 0) {
         const costoCombustible = (km / CONSUMO_KM_POR_LITRO) * PRECIO_LITRO_NAFTA;
         costoFinal = Math.round(costoCombustible + COSTO_FIJO_BASE);
-      } else if ((zipCode === "1439" && nombreLocalidad === "Villa Lugano")) {
-        costoFinal = 0;
       } else {
-        // Por las dudas, si no es Lomas y km es 0, aplicamos el base
         costoFinal = COSTO_FIJO_BASE;
       }
 
+      console.log("Costo final calculado:", costoFinal);
       setShippingCost(costoFinal);
 
-      // Sincronizamos con el carrito global (Esto es lo que lee el CartDrawer)
+      // Sincronización con el Contexto (Vital para que el carrito lo vea)
       if (setGlobalZip) setGlobalZip(zipCode);
       if (updateShipping) updateShipping(costoFinal);
 
