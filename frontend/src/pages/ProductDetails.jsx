@@ -164,8 +164,7 @@ const ProductDetails = () => {
       if (km > 0) {
         const costoCombustible = (km / CONSUMO_KM_POR_LITRO) * PRECIO_LITRO_NAFTA;
         costoFinal = Math.round(costoCombustible + COSTO_FIJO_BASE);
-      } else if (nombreLocalidad === "Lomas de Zamora") {
-        // Solo es gratis si explícitamente es Lomas
+      } else if ((zipCode === "1439" && nombreLocalidad === "Villa Lugano")) {
         costoFinal = 0;
       } else {
         // Por las dudas, si no es Lomas y km es 0, aplicamos el base
