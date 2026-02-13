@@ -58,14 +58,12 @@ export const createPreference = async (req: Request, res: Response) => {
     const result = await preference.create({
       body: {
         items: allItems,
-        external_reference: savedOrder._id.toString(),
         back_urls: {
-          success: "http://localhost:5173/pago-exitoso",
-          failure: "http://localhost:5173/carrito",
-          pending: "http://localhost:5173/pago-pendiente"
+          success: "https://seloyah.vercel.app/pago-exitoso",
+          failure: "https://seloyah.vercel.app/carrito",
+          pending: "https://seloyah.vercel.app/pago-pendiente"
         },
-        // Lo comentamos para asegurar que la API acepte la creación
-        // auto_return: "all", 
+        auto_return: "approved"
       }
     });
 
