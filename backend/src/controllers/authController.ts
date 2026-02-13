@@ -125,6 +125,11 @@ const forgotPassword = async (req: Request, res: Response): Promise<void> => {
     const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
 
     console.log("Token generado:", resetToken); // Solo para pruebas
+
+    console.log("------------------------------------------");
+    console.log("LINK DE PRUEBA:", resetUrl);
+    console.log("------------------------------------------");
+
     await sendResetEmail(user.email, resetUrl);
 
     res.status(200).json({ message: "Link de recuperación enviado al correo." });

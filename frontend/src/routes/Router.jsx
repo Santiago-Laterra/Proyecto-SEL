@@ -11,7 +11,8 @@ import PaymentSuccess from '../pages/PaymentSuccess';
 import PaymentPending from '../pages/PaymentPending';
 import ProductDetails from '../pages/ProductDetails';
 import Contact from '../components/Contact'; // Agregado
-
+import ForgotPassword from '../components/ForgotPasswords'; // Asegúrate de que la ruta sea correcta
+import ResetPassword from '../components/ResetPassword';
 
 const RouterApp = () => {
   return (
@@ -24,6 +25,11 @@ const RouterApp = () => {
         <Route path="/register" element={<Register />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/product/:id" element={<ProductDetails />} />
+
+        {/* NUEVAS RUTAS DE CONTRASEÑA */}
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
+
 
         {/* Rutas de Mercado Pago */}
         <Route path="/pago-exitoso" element={<PaymentSuccess />} />

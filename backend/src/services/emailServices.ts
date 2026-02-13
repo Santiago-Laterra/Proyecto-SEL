@@ -1,13 +1,20 @@
 import nodemailer from 'nodemailer';
 
 // Para desarrollo, te recomiendo usar Mailtrap.io o una App Password de Gmail
+// En emailServices.ts
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
   port: Number(process.env.EMAIL_PORT),
+  secure: false, // FALSE para puerto 587 o 2525
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+  tls: {
+    // Esto es lo que evita el error de "wrong version number"
+    ciphers: 'SSLv3',
+    rejectUnauthorized: false
+  }
 });
 
 export const sendResetEmail = async (email: string, resetUrl: string) => {
@@ -29,4 +36,3 @@ export const sendResetEmail = async (email: string, resetUrl: string) => {
   await transporter.sendMail(mailOptions);
 };
 
-export { sendResetEmail }

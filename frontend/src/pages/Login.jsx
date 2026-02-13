@@ -7,7 +7,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const { login } = useAuth(); // Nuestra función mágica del Contexto
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -15,14 +15,9 @@ const Login = () => {
     setError('');
 
     try {
-      // 1. Intentamos loguear con los datos del formulario
       await login(email, password);
-
-      // 2. Si el backend responde OK, el AuthContext guarda el token y el rol solo
-      // 3. Redirigimos a la Home, donde ya aparecerá el botón de Excel si es Admin
       navigate('/');
     } catch (err) {
-      // Si el backend tira 401 o 400, mostramos el error
       setError(typeof err === 'string' ? err : "Correo o contraseña incorrectos");
     }
   };
@@ -30,60 +25,63 @@ const Login = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-white p-4">
       <div className="w-full max-w-md">
-        <h1 className="text-4xl font-semibold text-center text-gray-800 mb-2">
-          Inicia sesión en tu cuenta
+        <h1 className="text-4xl font-semibold text-center text-gray-800 mb-2 font-serif">
+          Inicia sesión
         </h1>
-        <p className="text-center text-gray-500 mb-8">
-          Introduce tu dirección de correo electrónico y contraseña
+        <p className="text-center text-gray-500 mb-8 font-light text-sm">
+          Introduce tus credenciales para acceder a Soleyah
         </p>
 
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4 text-center">
+          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-2 rounded mb-4 text-center text-sm">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-gray-700 mb-1">Dirección de correo electrónico</label>
+            <label className="block text-gray-700 mb-1 text-sm font-medium">Email</label>
             <input
               type="email"
-              placeholder="Correo electrónico"
+              placeholder="tu@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all"
               required
             />
           </div>
 
           <div>
-            <label className="block text-gray-700 mb-1">Contraseña</label>
+            <div className="flex justify-between mb-1">
+              <label className="text-gray-700 text-sm font-medium">Contraseña</label>
+              {/* LINK AQUÍ: Justo arriba del input de password, a la derecha (estilo moderno) */}
+              <Link to="/forgot-password" size="sm" className="text-xs text-emerald-700 hover:text-emerald-800 hover:underline">
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
             <input
               type="password"
+              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all"
               required
             />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-semibold py-3 rounded-md transition duration-200 flex items-center justify-center gap-2"
+            className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-4 rounded-full text-xs uppercase tracking-widest transition duration-300 flex items-center justify-center gap-2"
           >
-            Iniciar sesión <span className="text-xl">→</span>
+            Entrar <span className="text-lg">→</span>
           </button>
         </form>
 
-        <div className="mt-8 text-center space-y-2">
-          <p>
-            <Link to="/forgot-password" size="sm" className="text-gray-600 hover:underline">
-              ¿Has olvidado la contraseña?
-            </Link>
-          </p>
-          <p>
-            <Link to="/register" className="text-gray-600 hover:underline">
-              Crear cuenta
+        <div className="mt-8 text-center">
+          <p className="text-gray-500 text-sm">
+            ¿No tienes cuenta?{' '}
+            <Link to="/register" className="text-emerald-700 font-semibold hover:underline">
+              Regístrate ahora
             </Link>
           </p>
         </div>
