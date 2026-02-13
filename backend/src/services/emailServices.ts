@@ -3,8 +3,9 @@ import nodemailer from 'nodemailer';
 // Para desarrollo, te recomiendo usar Mailtrap.io o una App Password de Gmail
 // En emailServices.ts
 const transporter = nodemailer.createTransport({
+  service: "gmail",
   host: process.env.EMAIL_HOST,
-  port: Number(process.env.EMAIL_PORT),
+  port: 465,
   secure: true, // FALSE para puerto 465
   auth: {
     user: process.env.EMAIL_USER,
