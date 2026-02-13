@@ -25,7 +25,6 @@ const RouterApp = () => {
         <Route path="/register" element={<Register />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/product/:id" element={<ProductDetails />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
 
         {/* NUEVAS RUTAS DE CONTRASEÑA */}
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -43,6 +42,8 @@ const RouterApp = () => {
           <Route path="/admin" element={<AdminDashboard />} />
           {/* Aquí es donde cargas los productos nuevos */}
           <Route path="/dashboard" element={<Dashboard />} />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
       <Footer />
