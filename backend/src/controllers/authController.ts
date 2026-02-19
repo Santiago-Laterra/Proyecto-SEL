@@ -171,31 +171,41 @@ const resetPassword = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-const notify = async (req, res) => {
+const notify = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { newStatus } = req.body;
 
-    // Actualizamos el estado de envío en la base de datos
+    // Actualizamos y traemos los datos del usuario
     const order = await Order.findByIdAndUpdate(
       id,
       { shippingStatus: newStatus },
       { new: true }
     ).populate('user');
 
-    const populatedOrder = order as any; // Truco rápido para saltar la validación de TS
+    if (!order) {
+      return res.status(404).json({ message: "Orden no encontrada" });
+    }
 
-    if (populatedOrder && populatedOrder.user && populatedOrder.user.email) {
+    // --- SOLUCIÓN PARA EL ERROR DE TYPESCRIPT ---
+    // Forzamos a 'any' para que nos deje acceder a .orderNumber y .user sin errores
+    const orderAny = order as any;
+    const userAny = orderAny.user;
+
+    if (userAny && userAny.email) {
       await notifyShippingUpdate(
-        populatedOrder.user.email,
-        populatedOrder.orderNumber || id,
+        userAny.email,
+        orderAny.orderNumber || id.slice(-6), // Ahora sí te deja usar orderNumber
         newStatus
       );
+      console.log("✅ Mail enviado a:", userAny.email);
     }
+
     res.json({ message: "Estado actualizado y mail enviado", order });
   } catch (error) {
+    console.error("❌ Error en notify:", error);
     res.status(500).json({ message: "Error al actualizar envío", error });
   }
-}
+};
 
 export { register, login, forgotPassword, resetPassword, notify }

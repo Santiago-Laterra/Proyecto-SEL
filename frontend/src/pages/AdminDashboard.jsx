@@ -297,7 +297,6 @@ const AdminDashboard = () => {
                           </select>
                         </div>
                       </td>
-
                       <td className="px-6 py-4 text-right">
                         <button onClick={() => handleDeleteOrder(o._id)} className="p-2 text-slate-300 hover:text-red-600 transition-colors"><Trash2 size={18} /></button>
                       </td>
