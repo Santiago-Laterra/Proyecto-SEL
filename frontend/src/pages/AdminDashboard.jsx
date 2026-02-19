@@ -102,6 +102,26 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleShippingChange = async (orderId, newStatus) => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      await api.put(`/products/orders/${orderId}/shipping`,
+        { newStatus },
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      setOrders(orders.map(o => o._id === orderId ? { ...o, shippingStatus: newStatus } : o));
+      if (newStatus === 'Despachado') {
+        alert("¡Pedido despachado! Mail enviado.");
+      }
+    } catch (error) {
+      alert("Error al actualizar envío.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   const handleUpdate = async () => {
     try {
       setLoading(true);
@@ -201,12 +221,23 @@ const AdminDashboard = () => {
           {/* Tabla con Scroll Horizontal */}
           <div className="overflow-x-auto">
             <table className="w-full text-left min-w-150">
-              <thead className="bg-gray-50 text-slate-500 text-xs uppercase tracking-widest border-b">
+              <thead className="bg-gray-50 text-slate-400 text-[10px] uppercase tracking-[0.2em] border-b">
                 <tr>
-                  <th className="px-6 py-4 font-semibold">{activeTab === 'products' ? 'Producto' : 'Cliente / ID'}</th>
-                  <th className="px-6 py-4 font-semibold">{activeTab === 'products' ? 'Precio' : 'Total'}</th>
-                  <th className="px-6 py-4 font-semibold">{activeTab === 'products' ? 'Stock' : 'Estado'}</th>
-                  <th className="px-6 py-4 font-semibold text-right">Acciones</th>
+                  {activeTab === 'products' ? (
+                    <>
+                      <th className="px-6 py-4 font-black">Producto</th>
+                      <th className="px-6 py-4 font-black">Precio</th>
+                      <th className="px-6 py-4 font-black">Stock</th>
+                    </>
+                  ) : (
+                    <>
+                      <th className="px-6 py-4 font-black">Cliente / ID</th>
+                      <th className="px-6 py-4 font-black">Total</th>
+                      <th className="px-6 py-4 font-black">Pago</th>
+                      <th className="px-6 py-4 font-black">Estado Envío</th>
+                    </>
+                  )}
+                  <th className="px-6 py-4 font-black text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -227,22 +258,51 @@ const AdminDashboard = () => {
                   ))
                 ) : (
                   filteredOrders.map((o) => (
-                    <tr key={o._id} className="hover:bg-gray-50/50">
+                    <tr key={o._id} className="hover:bg-gray-50/50 border-b border-gray-100 last:border-0">
                       <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-slate-700">{o.user?.name || 'Invitado'}</div>
-                        <div className="text-[10px] text-slate-400 font-mono">...{o._id.slice(-6)}</div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="bg-red-50 text-red-600 text-[10px] font-black px-2 py-0.5 rounded-md border border-red-100 uppercase tracking-tighter">
+                            {o.orderNumber || 'S/N'}
+                          </span>
+                          <div className="text-sm font-bold text-slate-800">{o.user?.name || 'Invitado'}</div>
+                        </div>
+                        <div className="text-[9px] text-slate-400 font-mono tracking-widest pl-1">ID: ...{o._id.slice(-6)}</div>
                       </td>
-                      <td className="px-6 py-4 text-sm font-bold">${o.totalAmount.toLocaleString()}</td>
+
+                      <td className="px-6 py-4 text-sm font-black text-slate-900">${o.totalAmount.toLocaleString()}</td>
+
                       <td className="px-6 py-4">
-                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${o.status === 'approved' || o.status === 'paid'
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-amber-100 text-amber-700'
+                        <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest ${o.status === 'approved' || o.status === 'paid'
+                            ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                            : 'bg-amber-100 text-amber-700 border border-amber-200'
                           }`}>
-                          {o.status === 'approved' ? 'PAGADO' : o.status.toUpperCase()}
+                          {o.status === 'approved' || o.status === 'paid' ? 'APROBADO' : 'PENDIENTE'}
                         </span>
                       </td>
+
+                      <td className="px-6 py-4">
+                        <div className="relative group">
+                          <select
+                            value={o.shippingStatus || 'Por empaquetar'}
+                            onChange={(e) => handleShippingChange(o._id, e.target.value)}
+                            disabled={loading}
+                            className={`appearance-none cursor-pointer pl-3 pr-8 py-1.5 rounded-lg text-[10px] font-bold border transition-all duration-300 outline-none ${o.shippingStatus === 'Despachado' ? 'bg-emerald-50 border-emerald-200 text-emerald-600' :
+                                o.shippingStatus === 'Empaquetado' ? 'bg-blue-50 border-blue-200 text-blue-600' :
+                                  'bg-amber-50 border-amber-200 text-amber-600'
+                              }`}
+                          >
+                            <option value="Por empaquetar">📦 POR EMPAQUETAR</option>
+                            <option value="Empaquetado">🎁 EMPAQUETADO</option>
+                            <option value="Despachado">🚚 DESPACHADO</option>
+                          </select>
+                          <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-40">
+                            <RefreshCw size={10} className={loading ? 'animate-spin' : ''} />
+                          </div>
+                        </div>
+                      </td>
+
                       <td className="px-6 py-4 text-right">
-                        <button onClick={() => handleDeleteOrder(o._id)} className="p-2 text-slate-300 hover:text-red-600"><Trash2 size={18} /></button>
+                        <button onClick={() => handleDeleteOrder(o._id)} className="p-2 text-slate-300 hover:text-red-600 transition-colors"><Trash2 size={18} /></button>
                       </td>
                     </tr>
                   ))
