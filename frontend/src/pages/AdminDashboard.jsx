@@ -60,7 +60,7 @@ const AdminDashboard = () => {
       Email: order.user?.email || 'N/A',
       Total: order.totalAmount,
       Envio: order.shippingCost,
-      Estado: order.status === 'paid' ? 'PAGADO' : order.status === 'pending' ? 'PENDIENTE' : 'FALLIDO',
+      Estado: order.status === 'paid' ? 'PAGADO' : order.status === 'approved' ? 'PAGADO' : order.status === 'pending' ? 'PENDIENTE' : 'FALLIDO',
       Direccion: `${order.shippingAddress?.street} ${order.shippingAddress?.number}, ${order.shippingAddress?.city}`
     }));
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -234,8 +234,11 @@ const AdminDashboard = () => {
                       </td>
                       <td className="px-6 py-4 text-sm font-bold">${o.totalAmount.toLocaleString()}</td>
                       <td className="px-6 py-4">
-                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${o.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
-                          {o.status.toUpperCase()}
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${o.status === 'approved' || o.status === 'paid'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-amber-100 text-amber-700'
+                          }`}>
+                          {o.status === 'approved' ? 'PAGADO' : o.status.toUpperCase()}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">

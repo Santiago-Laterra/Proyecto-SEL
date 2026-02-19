@@ -3,6 +3,7 @@ import { getProducts, addProduct, updateProduct, deleteProduct, getProductById }
 import { authMiddleware, isAdmin } from '../middleware/authMiddleware';
 import { upload } from "../config/cloudinary";
 import { exportProductsToExcel, getAllOrders, deleteOrder } from '../controllers/adminController';
+import { notify } from '../controllers/authController';
 
 const router = Router();
 
@@ -19,7 +20,7 @@ router.delete('/orders/:id', authMiddleware, isAdmin, deleteOrder);
 // Rutas protegidas: Solo el Admin con un Token válido puede entrar
 router.put('/:id', authMiddleware, isAdmin, upload.array('image', 5), updateProduct);
 router.delete('/:id', authMiddleware, isAdmin, deleteProduct);
-
+router.put('/orders/:id/shipping', authMiddleware, isAdmin, notify);
 
 // Lo aplicas solo en la ruta de creación (POST)
 router.post("/add", upload.array('image', 5), addProduct);

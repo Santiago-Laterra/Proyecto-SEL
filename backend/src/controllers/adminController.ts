@@ -59,3 +59,19 @@ export const deleteOrder = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Error interno del servidor" });
   }
 };
+
+export const updateShippingStatus = async (req: Request, res: Response) => {
+  const { orderId, newStatus } = req.body;
+  const order = await Order.findByIdAndUpdate(
+    orderId,
+    { shippingStatus: newStatus },
+    { new: true }
+  );
+
+  // Aquí dispararemos el mail de Resend cuando el estado sea 'Despachado'
+  if (newStatus === 'Despachado') {
+    // enviarMailUpdate(order.user.email, newStatus);
+  }
+
+  res.json(order);
+};

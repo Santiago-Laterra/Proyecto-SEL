@@ -116,7 +116,7 @@ export const receiveWebhook = async (req: Request, res: Response) => {
       if (status === "approved" || status === "pending" || status === "in_process") {
 
         // Mapeamos el status de MP a tu sistema de Admin
-        const dbStatus = (status === "approved") ? 'paid' : 'pending';
+        const dbStatus = (status === "approved") ? 'approved' : 'pending';
 
         await Order.findByIdAndUpdate(orderId, {
           status: dbStatus,

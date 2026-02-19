@@ -36,6 +36,13 @@ const OrderSchema: Schema = new Schema({
     zipCode: { type: String, required: true },
     notes: { type: String }
   },
+  orderNumber: { type: String, unique: true },
+  shippingStatus: {
+    type: String,
+    enum: ['Por empaquetar', 'Empaquetado', 'Despachado'],
+    default: 'Por empaquetar'
+  },
+  phoneNumber: { type: String, required: true },
   shippingCost: { type: Number, default: 0 },
   totalAmount: { type: Number, required: true },
   status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },

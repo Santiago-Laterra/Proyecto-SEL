@@ -30,3 +30,21 @@ export const sendResetEmail = async (email: string, resetUrl: string) => {
     throw error;
   }
 };
+
+export const notifyShippingUpdate = async (email: string, orderNumber: string, status: string) => {
+  await resend.emails.send({
+    from: 'SeloYah <onboarding@resend.dev>', // Por ahora usá este de prueba
+    to: [email],
+    subject: `Actualización de tu pedido ${orderNumber} - SeloYah`,
+    html: `
+      <div style="font-family: sans-serif; border: 1px solid #eee; padding: 20px;">
+        <h2 style="color: #1e293b;">¡Hola! Tu pedido ha cambiado de estado.</h2>
+        <p>El pedido <strong>${orderNumber}</strong> ahora se encuentra:</p>
+        <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; font-size: 18px; text-align: center; font-weight: bold; color: #059669;">
+          ${status.toUpperCase()}
+        </div>
+        <p style="margin-top: 20px;">Te avisaremos cuando haya más novedades. <br> <strong>SeloYah</strong></p>
+      </div>
+    `
+  });
+};

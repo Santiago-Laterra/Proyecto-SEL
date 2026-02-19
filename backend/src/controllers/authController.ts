@@ -4,7 +4,8 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken'
 import crypto from 'crypto';
 import { sendResetEmail } from '../services/emailServices';
-
+import { Order } from '../model/orderModel';
+import { notifyShippingUpdate } from '../services/emailServices';
 
 const register = async (req: Request, res: Response) => {
 
@@ -170,4 +171,31 @@ const resetPassword = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export { register, login, forgotPassword, resetPassword }
+const notify = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { newStatus } = req.body;
+
+    // Actualizamos el estado de envío en la base de datos
+    const order = await Order.findByIdAndUpdate(
+      id,
+      { shippingStatus: newStatus },
+      { new: true }
+    ).populate('user');
+
+    const populatedOrder = order as any; // Truco rápido para saltar la validación de TS
+
+    if (populatedOrder && populatedOrder.user && populatedOrder.user.email) {
+      await notifyShippingUpdate(
+        populatedOrder.user.email,
+        populatedOrder.orderNumber || id,
+        newStatus
+      );
+    }
+    res.json({ message: "Estado actualizado y mail enviado", order });
+  } catch (error) {
+    res.status(500).json({ message: "Error al actualizar envío", error });
+  }
+}
+
+export { register, login, forgotPassword, resetPassword, notify }
