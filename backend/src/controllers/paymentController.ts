@@ -16,6 +16,11 @@ export const createPreference = async (req: Request, res: Response) => {
     const itemsTotal = items.reduce((acc: number, item: any) => acc + (item.unit_price * item.quantity), 0);
     const totalAmount = itemsTotal + (Number(shippingCost) || 0);
 
+    // LÓGICA DEL CONTADOR
+    const orderCount = await Order.countDocuments(); // Cuenta cuántas hay
+    const nextNumber = (orderCount + 1).toString().padStart(4, '0');
+    const orderNumber = `SY-${nextNumber}`;
+
     // 1. CREAMOS LA ORDEN EN MONGODB
     console.log("=== 2. INTENTANDO GUARDAR ORDEN EN MONGO ===");
     const newOrder = new Order({
@@ -24,7 +29,10 @@ export const createPreference = async (req: Request, res: Response) => {
       shippingAddress: shippingAddress,
       shippingCost: Number(shippingCost) || 0,
       totalAmount: totalAmount,
-      status: 'pending'
+      status: 'pending',
+      orderNumber: orderNumber, // Guardamos el número nuevo
+      shippingStatus: 'Por empaquetar', // Estado inicial por defecto
+      phoneNumber: req.body.phoneNumber
     });
 
     const savedOrder = await newOrder.save();
@@ -58,6 +66,7 @@ export const createPreference = async (req: Request, res: Response) => {
     const result = await preference.create({
       body: {
         items: allItems,
+        external_reference: savedOrder._id.toString(),
         back_urls: {
           success: "https://seloyah.vercel.app/pago-exitoso",
           failure: "https://seloyah.vercel.app/carrito",
