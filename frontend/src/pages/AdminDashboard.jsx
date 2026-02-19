@@ -273,8 +273,8 @@ const AdminDashboard = () => {
 
                       <td className="px-6 py-4">
                         <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest ${o.status === 'approved' || o.status === 'paid'
-                            ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                            : 'bg-amber-100 text-amber-700 border border-amber-200'
+                          ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                          : 'bg-amber-100 text-amber-700 border border-amber-200'
                           }`}>
                           {o.status === 'approved' || o.status === 'paid' ? 'APROBADO' : 'PENDIENTE'}
                         </span>
@@ -287,17 +287,14 @@ const AdminDashboard = () => {
                             onChange={(e) => handleShippingChange(o._id, e.target.value)}
                             disabled={loading}
                             className={`appearance-none cursor-pointer pl-3 pr-8 py-1.5 rounded-lg text-[10px] font-bold border transition-all duration-300 outline-none ${o.shippingStatus === 'Despachado' ? 'bg-emerald-50 border-emerald-200 text-emerald-600' :
-                                o.shippingStatus === 'Empaquetado' ? 'bg-blue-50 border-blue-200 text-blue-600' :
-                                  'bg-amber-50 border-amber-200 text-amber-600'
+                              o.shippingStatus === 'Empaquetado' ? 'bg-blue-50 border-blue-200 text-blue-600' :
+                                'bg-amber-50 border-amber-200 text-amber-600'
                               }`}
                           >
                             <option value="Por empaquetar">📦 POR EMPAQUETAR</option>
                             <option value="Empaquetado">🎁 EMPAQUETADO</option>
                             <option value="Despachado">🚚 DESPACHADO</option>
                           </select>
-                          <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-40">
-                            <RefreshCw size={10} className={loading ? 'animate-spin' : ''} />
-                          </div>
                         </div>
                       </td>
 
