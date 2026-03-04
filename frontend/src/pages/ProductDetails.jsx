@@ -7,113 +7,43 @@ import api from '../services/api';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 
-
 // Estilos de Swiper
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 
-// --- CONFIGURACIÓN DE CÁLCULO UNIFICADA ---
-const PRECIO_LITRO_NAFTA = 1000;
-const CONSUMO_KM_POR_LITRO = 10;
-const COSTO_FIJO_BASE = 500;
-
-const DISTANCIAS_KM = {
-  // --- CABA ---
-  "Villa Lugano": 1,
-  "Nueva Pompeya": 6,
-  "Parque Patricios": 8,
-  "Floresta": 7,
-  "Parque Avellaneda": 4,
-  "Flores": 6,
-  "Liniers": 7,
-  "Parque Chacabuco": 7,
-  "Caballito": 9,
-  "Boedo": 10,
-  "Almagro": 11,
-  "Villa Crespo": 12,
-  "Villa General Mitre": 9,
-  "Villa del Parque": 11,
-  "Villa Devoto": 13,
-  "Villa Urquiza": 16,
-  "Villa Pueyrredón": 15,
-  "Saavedra": 18,
-  "Núñez": 20,
-  "Belgrano": 18,
-  "Colegiales": 16,
-  "Palermo": 15,
-  "San Cristóbal": 11,
-  "Constitución": 12,
-  "San Telmo": 13,
-  "Monserrat": 13,
-  "San Nicolás": 14,
-
-  // --- GBA SUR ---
-  "Gerli": 10,
-  "Lanús": 11,
-  "Remedios de Escalada": 13,
-  "Banfield": 15,
-  "Lomas de Zamora": 17,
-  "Temperley": 19,
-  "Turdera": 20,
-  "Llavallol": 22,
-  "Adrogué": 23,
-  "Luis Guillón": 24,
-  "Monte Grande": 26,
-  "Avellaneda Centro": 12,
-
-  // Default para lugares no mapeados
-  "DEFAULT": 25
-};
-// Mapeo de Códigos Postales a Localidades para que el cálculo sea igual
+// Mapa de CPs para que la función sepa qué nombre mandarle al Context
 const CP_A_LOCALIDAD = {
-  // CABA
-  "1439": "Villa Lugano",
-  "1437": "Nueva Pompeya",
-  "1407": "Floresta",
-  "1406": "Flores",
-  "1408": "Liniers",
-  "1405": "Caballito",
-  "1218": "Boedo",
-  "1173": "Almagro",
-  "1414": "Villa Crespo",
-  "1417": "Villa del Parque",
-  "1419": "Villa Devoto",
-  "1431": "Villa Urquiza",
-  "1430": "Saavedra",
-  "1429": "Núñez",
-  "1428": "Belgrano",
-  "1425": "Palermo",
-  "1133": "San Telmo",
-  "1001": "San Nicolás",
-
-  // GBA SUR
-  "1824": "Lanús",
-  "1826": "Remedios de Escalada",
-  "1828": "Banfield",
-  "1832": "Lomas de Zamora",
-  "1834": "Temperley",
-  "1836": "Llavallol",
-  "1842": "Monte Grande",
-  "1870": "Avellaneda Centro",
+  "1173": "Almagro", "1428": "Belgrano", "1218": "Boedo", "1405": "Caballito",
+  "1133": "Constitución", "1406": "Flores", "1407": "Floresta", "1408": "Liniers",
+  "1437": "Nueva Pompeya", "1429": "Núñez", "1425": "Palermo", "1430": "Saavedra",
+  "1224": "San Cristóbal", "1001": "San Nicolás", "1414": "Villa Crespo",
+  "1417": "Villa del Parque", "1419": "Villa Devoto", "1439": "Villa Lugano",
+  "1431": "Villa Urquiza", "1824": "Lanús", "1826": "Remedios de Escalada",
+  "1828": "Banfield", "1832": "Lomas de Zamora", "1834": "Temperley",
+  "1836": "Llavallol", "1842": "Monte Grande", "1870": "Avellaneda Centro",
   "1846": "Adrogué"
 };
 
 const ProductDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [zipCode, setZipCode] = useState('');
-  const [shippingCost, setShippingCost] = useState(null);
   const [calculating, setCalculating] = useState(false);
+
   const { toggleWishlist, isFavorite } = useWishlist();
 
-  const navigate = useNavigate();
+  // EXTRACCIÓN CORRECTA DEL CONTEXTO
+  const {
+    addToCart,
+    clearShipping,
+    calculateShippingAction, // <--- Esto te faltaba extraer
+    shippingCost: globalShippingCost // <--- Usamos el del context
+  } = useCart();
 
-  // Traemos las funciones del Contexto
-  const { addToCart, updateShipping, setZipCode: setGlobalZip, clearShipping } = useCart();
-
-  // 1. Cargar el producto al montar
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -128,67 +58,36 @@ const ProductDetails = () => {
     fetchProduct();
   }, [id]);
 
+  // Limpiar envío al desmontar si lo deseas, o dejarlo persistente
   useEffect(() => {
     return () => {
-      if (clearShipping) clearShipping();
+      // Opcional: si quieres que el envío se borre al salir de la página
+      // if (clearShipping) clearShipping(); 
     };
   }, []);
 
-
-  // 3. LÓGICA DE CÁLCULO LOCAL (Actualizada para usar el mapa de localidades)
   const handleCalculateShipping = () => {
     if (zipCode.length < 4) return alert("Por favor, ingresá un código postal válido");
 
     setCalculating(true);
 
-    setTimeout(() => {
-      const nombreLocalidad = CP_A_LOCALIDAD[zipCode];
-      console.log("CP ingresado:", zipCode, "Localidad detectada:", nombreLocalidad); // Para debugear
+    const nombreLocalidad = CP_A_LOCALIDAD[zipCode];
 
-      if (!nombreLocalidad) {
-        alert("Lo sentimos, por el momento no realizamos envíos a esta zona.");
-        setShippingCost(null);
-        if (clearShipping) clearShipping();
-        setCalculating(false);
-        return;
-      }
-
-      const km = DISTANCIAS_KM[nombreLocalidad] !== undefined
-        ? DISTANCIAS_KM[nombreLocalidad]
-        : DISTANCIAS_KM["DEFAULT"];
-
-      let costoFinal = 0;
-
-      // REGLA DE ORO: Si es 1439 y Villa Lugano, el costo es 0
-      if (zipCode === "1439" && nombreLocalidad === "Villa Lugano") {
-        costoFinal = 0;
-      } else if (km > 0) {
-        const costoCombustible = (km / CONSUMO_KM_POR_LITRO) * PRECIO_LITRO_NAFTA;
-        costoFinal = Math.round(costoCombustible + COSTO_FIJO_BASE);
-      } else {
-        costoFinal = COSTO_FIJO_BASE;
-      }
-
-      console.log("Costo final calculado:", costoFinal);
-      setShippingCost(costoFinal);
-
-      // Sincronización con el Contexto (Vital para que el carrito lo vea)
-      if (setGlobalZip) setGlobalZip(zipCode);
-      if (updateShipping) updateShipping(costoFinal);
-
+    if (!nombreLocalidad) {
+      alert("No realizamos envíos a esta zona o el CP es incorrecto.");
       setCalculating(false);
-    }, 600);
+      return;
+    }
+
+    // Llamamos a la función centralizada del Context
+    calculateShippingAction(zipCode, nombreLocalidad);
+    setCalculating(false);
   };
 
   if (loading) return <div className="text-center py-40">Cargando producto...</div>;
   if (!product) return <div className="text-center py-40">Producto no encontrado.</div>;
 
   const carouselImages = Array.isArray(product.image) ? product.image : [product.image];
-
-  const handleBuyNow = () => {
-    addToCart(product); // Lo agrega al carrito
-    navigate('/carrito'); // Lo manda directo a pagar (o al home si tu carrito es un Drawer)
-  };
 
   return (
     <div className="min-h-screen bg-white pt-32 pb-20 px-5 md:px-[160.4px] font-proxima">
@@ -201,19 +100,12 @@ const ProductDetails = () => {
             navigation
             pagination={{ clickable: true }}
             loop={true}
-            autoplay={{
-              delay: 3000,
-              disableOnInteraction: false,
-            }}
+            autoplay={{ delay: 3000, disableOnInteraction: false }}
             className="rounded-2xl overflow-hidden shadow-sm border border-gray-100"
           >
             {carouselImages.map((img, index) => (
               <SwiperSlide key={index}>
-                <img
-                  src={img}
-                  alt={`Vista ${index}`}
-                  className="w-full h-auto object-cover aspect-square"
-                />
+                <img src={img} alt={`Vista ${index}`} className="w-full h-auto object-cover aspect-square" />
               </SwiperSlide>
             ))}
           </Swiper>
@@ -222,7 +114,6 @@ const ProductDetails = () => {
         {/* INFO DEL PRODUCTO */}
         <div className="w-full md:w-1/2 flex flex-col gap-6">
           <h1 className="text-3xl text-slate-800 leading-tight font-serif">{product.name}</h1>
-
           <p className="text-2xl font-normal text-slate-900">
             {Number(product.price).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}
           </p>
@@ -235,7 +126,7 @@ const ProductDetails = () => {
               Añadir al carrito
             </button>
             <button
-              onClick={handleBuyNow}
+              onClick={() => { addToCart(product); navigate('/carrito'); }}
               className="w-full border border-[#007f5f] text-[#007f5f] py-4 rounded-md font-bold hover:bg-slate-50 transition-all"
             >
               Compra ahora
@@ -254,13 +145,10 @@ const ProductDetails = () => {
                 <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
-                  inputMode="numeric" // Abre el teclado numérico en celulares
+                  inputMode="numeric"
                   placeholder="Tu código postal (ej: 1828)"
                   value={zipCode}
-                  onChange={(e) => {
-                    setZipCode(e.target.value);
-                    if (e.target.value === '') setShippingCost(null); // Limpia el costo visual si borran el input
-                  }}
+                  onChange={(e) => setZipCode(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#007f5f]"
                 />
               </div>
@@ -273,24 +161,28 @@ const ProductDetails = () => {
               </button>
             </div>
 
-            {shippingCost !== null && (
+            {/* Mostramos el costo global del context */}
+            {globalShippingCost !== null && globalShippingCost > 0 && (
               <div className="mt-4 p-3 bg-white rounded-lg border border-emerald-100 flex justify-between items-center animate-in fade-in slide-in-from-top-2">
                 <span className="text-sm text-slate-600">Costo de envío:</span>
                 <span className="font-bold text-emerald-700">
-                  {shippingCost === 0 ? "¡Envío sin cargo!" : `$ ${shippingCost.toLocaleString('es-AR')}`}
+                  $ {globalShippingCost.toLocaleString('es-AR')}
                 </span>
+              </div>
+            )}
+            {globalShippingCost === 0 && zipCode && (
+              <div className="mt-4 p-3 bg-emerald-50 rounded-lg border border-emerald-100 text-center text-sm text-emerald-700 font-bold">
+                ¡Envío sin cargo para tu zona!
               </div>
             )}
           </div>
 
+          {/* BOTÓN WISHLIST */}
           <button
             onClick={() => toggleWishlist(product)}
             className="flex items-center gap-2 text-slate-500 text-sm hover:text-slate-800 transition-colors w-fit mt-2 group"
           >
-            <Heart
-              size={18}
-              className={`transition-colors ${isFavorite(product._id) ? 'fill-red-500 text-red-500' : 'text-slate-500'}`}
-            />
+            <Heart size={18} className={`transition-colors ${isFavorite(product._id) ? 'fill-red-500 text-red-500' : 'text-slate-500'}`} />
             <span className={isFavorite(product._id) ? 'text-red-600 font-medium' : 'underline'}>
               {isFavorite(product._id) ? 'En tu lista de deseos' : 'Añadir a la lista de deseos'}
             </span>
