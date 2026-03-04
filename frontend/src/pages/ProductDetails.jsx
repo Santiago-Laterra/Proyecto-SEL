@@ -131,7 +131,7 @@ const ProductDetails = () => {
               Añadir al carrito
             </button>
             <button
-              onClick={handleBuyNow}
+              onClick={() => { handleBuyNow }}
               className="w-full border border-[#007f5f] text-[#007f5f] py-4 rounded-md font-bold hover:bg-slate-50 transition-all"
             >
               Compra ahora
