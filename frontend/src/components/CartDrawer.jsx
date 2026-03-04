@@ -6,17 +6,7 @@ import api from '../services/api';
 const CartDrawer = ({ isOpen, onClose }) => {
   const { cart, removeFromCart, cartTotal, shippingCost, zipCod } = useCart();
   const [loading, setLoading] = useState(false);
-  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const { openCheckout } = useCart();
-
-  const [address, setAddress] = useState({
-    street: '',
-    number: '',
-    city: '',
-    type: 'casa',
-    floor: '',
-    apartment: ''
-  });
 
   const CP_A_OPCIONES = {
     "1173": ["Almagro"], "1428": ["Belgrano", "Colegiales"], "1218": ["Boedo"],
@@ -44,41 +34,6 @@ const CartDrawer = ({ isOpen, onClose }) => {
     setTimeout(() => {
       openCheckout(); // Después abrimos el nuevo Modal
     }, 300);
-  };
-
-  const handleConfirmPurchase = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const userRaw = localStorage.getItem('user');
-      const userData = JSON.parse(userRaw);
-      const extraInfo = address.type === 'depto' ? ` - Piso: ${address.floor} Depto: ${address.apartment}` : '';
-      const payload = {
-        items: cart.map(item => ({
-          id: item._id,
-          title: item.name,
-          unit_price: Number(item.price),
-          quantity: 1,
-          currency_id: "ARS"
-        })),
-        shippingCost: Number(shippingCost),
-        userId: userData.id || userData._id,
-        shippingAddress: {
-          ...address,
-          zipCode: zipCod,
-          fullAddress: `${address.street} ${address.number}${extraInfo}, ${address.city}`
-        }
-      };
-      const response = await api.post('/payments/create-preference', payload);
-      if (response.data.init_point) {
-        window.location.href = response.data.init_point;
-      }
-    } catch (error) {
-      console.error("Error detalle:", error);
-      alert("Error al procesar el pago");
-    } finally {
-      setLoading(false);
-    }
   };
 
   return (
