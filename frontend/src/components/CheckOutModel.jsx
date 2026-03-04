@@ -3,6 +3,7 @@ import { useCart } from '../context/CartContext';
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 
+
 const CheckoutModal = () => {
   const { isCheckoutOpen, closeCheckout, cart, shippingCost, zipCod, calculateShippingAction, cartTotal } = useCart();
   const [loading, setLoading] = useState(false);

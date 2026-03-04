@@ -8,6 +8,7 @@ export const CartProvider = ({ children }) => {
   const CONSUMO_KM_POR_LITRO = 10;
   const COSTO_FIJO_BASE = 500;
 
+
   const DISTANCIAS_KM = {
     "Villa Lugano": 1, "Nueva Pompeya": 6, "Parque Patricios": 8, "Floresta": 7,
     "Parque Avellaneda": 4, "Flores": 6, "Liniers": 7, "Parque Chacabuco": 7,
