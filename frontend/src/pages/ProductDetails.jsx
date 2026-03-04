@@ -27,7 +27,6 @@ const CP_A_LOCALIDAD = {
 
 const ProductDetails = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -39,7 +38,7 @@ const ProductDetails = () => {
   // EXTRACCIÓN CORRECTA DEL CONTEXTO
   const {
     addToCart,
-    clearShipping,
+    openCheckout,
     calculateShippingAction, // <--- Esto te faltaba extraer
     shippingCost: globalShippingCost // <--- Usamos el del context
   } = useCart();
@@ -90,11 +89,8 @@ const ProductDetails = () => {
   const carouselImages = Array.isArray(product.image) ? product.image : [product.image];
 
   const handleBuyNow = () => {
-    // 1. Agregamos al carrito
-    addToCart(product);
 
-    // 2. Abrimos el modal de checkout directamente
-    // Usamos el método que ya tenés en el useCart()
+    addToCart(product);
     openCheckout();
   };
 
@@ -135,7 +131,7 @@ const ProductDetails = () => {
               Añadir al carrito
             </button>
             <button
-              onClick={() => { handleBuyNow }}
+              onClick={handleBuyNow}
               className="w-full border border-[#007f5f] text-[#007f5f] py-4 rounded-md font-bold hover:bg-slate-50 transition-all"
             >
               Compra ahora
