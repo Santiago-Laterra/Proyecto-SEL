@@ -3,7 +3,7 @@ import { createContext, useState, useEffect, useContext } from 'react';
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
-  // --- CONFIGURACIÓN DE CÁLCULO DE ENVÍO ---
+  // --- CONFIGURACIÓN DE CÁLCULO ---
   const PRECIO_LITRO_NAFTA = 1000;
   const CONSUMO_KM_POR_LITRO = 10;
   const COSTO_FIJO_BASE = 500;
@@ -16,65 +16,73 @@ export const CartProvider = ({ children }) => {
     "Villa Urquiza": 16, "Villa Pueyrredón": 15, "Saavedra": 18, "Núñez": 20,
     "Belgrano": 18, "Colegiales": 16, "Palermo": 15, "San Cristóbal": 11,
     "Constitución": 12, "San Telmo": 13, "Monserrat": 13, "San Nicolás": 14,
-    "Puerto Madero": 15, "Retiro": 15, "Recoleta": 14, "Balvanera": 12,
-    "San Cristóbal": 11, "Lanús": 5, "Gerli": 6, "Remedios de Escalada": 7,
-    "Banfield": 9, "Lomas de Zamora": 11, "Temperley": 13, "Turdera": 14,
-    "Llavallol": 16, "Monte Grande": 18, "Luis Guillón": 17, "Avellaneda Centro": 10,
-    "Adrogué": 16
+    "Gerli": 10, "Lanús": 11, "Remedios de Escalada": 13, "Banfield": 15,
+    "Lomas de Zamora": 17, "Temperley": 19, "Turdera": 20, "Llavallol": 22,
+    "Adrogué": 23, "Luis Guillón": 24, "Monte Grande": 26, "Avellaneda Centro": 12,
+    "DEFAULT": 25
   };
 
-  // --- ESTADOS ---
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const openCheckout = () => setIsCheckoutOpen(true);
+  const closeCheckout = () => setIsCheckoutOpen(false);
+
+  // 1. Estado para el Código Postal
+  const [zipCode, setZipCode] = useState(() => localStorage.getItem('soleyah_zipcode') || '');
+
+  // 2. Estado para el Costo de Envío
+  const [shippingCost, setShippingCost] = useState(() => {
+    const saved = localStorage.getItem('soleyah_shipping_cost');
+    return saved ? Number(saved) : 0;
+  });
+
+  // 3. Estado para el Carrito
   const [cart, setCart] = useState(() => {
     const savedCart = localStorage.getItem('soleyah_cart');
     return savedCart ? JSON.parse(savedCart) : [];
   });
 
-  const [shippingCost, setShippingCost] = useState(() => {
-    return Number(localStorage.getItem('soleyah_shipping_cost')) || 0;
-  });
-
-  const [zipCode, setZipCode] = useState(() => {
-    return localStorage.getItem('soleyah_zipcode') || '';
-  });
-
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-
-  // --- PERSISTENCIA ---
+  // Persistencia del carrito
   useEffect(() => {
     localStorage.setItem('soleyah_cart', JSON.stringify(cart));
   }, [cart]);
 
-  // --- ACCIONES DEL CARRITO ---
-
-  // Agregar al carrito o sumar si ya existe
-  const addToCart = (product) => {
-    setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item._id === product._id);
-      if (existingItem) {
-        return prevCart.map((item) =>
-          item._id === product._id
-            ? { ...item, quantity: (item.quantity || 1) + 1 }
-            : item
-        );
-      }
-      return [...prevCart, { ...product, quantity: 1 }];
-    });
+  // Funciones de actualización (DEBEN IR ANTES DE SER USADAS)
+  const handleSetZipCode = (zip) => {
+    setZipCode(zip);
+    localStorage.setItem('soleyah_zipcode', zip);
   };
 
-  // Modificar cantidad (sumar o restar)
-  const updateQuantity = (productId, amount) => {
+  const updateShipping = (cost) => {
+    const numericCost = Number(cost);
+    setShippingCost(numericCost);
+    localStorage.setItem('soleyah_shipping_cost', numericCost.toString());
+  };
+
+  // --- ACCIÓN DE CÁLCULO CENTRALIZADA ---
+  const calculateShippingAction = (cp, localidadNombre) => {
+    if (!localidadNombre) return 0;
+
+    const km = DISTANCIAS_KM[localidadNombre] ?? DISTANCIAS_KM["DEFAULT"];
+    let costoFinal = 0;
+
+    if (cp === "1439" && localidadNombre === "Villa Lugano") {
+      costoFinal = 0;
+    } else if (km > 0) {
+      costoFinal = Math.round((km / CONSUMO_KM_POR_LITRO) * PRECIO_LITRO_NAFTA + COSTO_FIJO_BASE);
+    } else {
+      costoFinal = COSTO_FIJO_BASE;
+    }
+
+    updateShipping(costoFinal);
+    handleSetZipCode(cp);
+    return costoFinal;
+  };
+
+  const addToCart = (product) => {
     setCart((prevCart) => {
-      return prevCart
-        .map((item) => {
-          if (item._id === productId) {
-            const currentQty = item.quantity || 1;
-            const newQty = currentQty + amount;
-            // Si es mayor a 0, actualizamos
-            return newQty > 0 ? { ...item, quantity: newQty } : { ...item, quantity: 0 };
-          }
-          return item;
-        })
-        .filter((item) => item.quantity > 0); // Si quedó en 0, se va del carrito
+      const isProductInCart = prevCart.find((item) => item._id === product._id);
+      if (isProductInCart) return prevCart;
+      return [...prevCart, product];
     });
   };
 
@@ -82,39 +90,7 @@ export const CartProvider = ({ children }) => {
     setCart((prevCart) => prevCart.filter((item) => item._id !== productId));
   };
 
-  // --- CÁLCULOS TOTALES ---
-  const cartTotal = cart.reduce((acc, item) => {
-    return acc + (Number(item.price) * (item.quantity || 1));
-  }, 0);
-
-  // Cantidad total de productos (para el globito del icono)
-  const cartCount = cart.reduce((acc, item) => acc + (item.quantity || 1), 0);
-
-  // --- LÓGICA DE ENVÍO ---
-  const updateShipping = (cost) => {
-    setShippingCost(cost);
-    localStorage.setItem('soleyah_shipping_cost', cost);
-  };
-
-  const handleSetZipCode = (cp) => {
-    setZipCode(cp);
-    localStorage.setItem('soleyah_zipcode', cp);
-  };
-
-  const calculateShippingAction = (cp, localidad) => {
-    const km = DISTANCIAS_KM[localidad];
-    let costoFinal = 0;
-
-    if (km !== undefined) {
-      costoFinal = km === 0 ? 0 : Math.round((km / CONSUMO_KM_POR_LITRO) * PRECIO_LITRO_NAFTA + COSTO_FIJO_BASE);
-    } else {
-      costoFinal = 2500; // Costo por defecto si no se encuentra
-    }
-
-    updateShipping(costoFinal);
-    handleSetZipCode(cp);
-    return costoFinal;
-  };
+  const cartTotal = cart.reduce((acc, item) => acc + Number(item.price), 0);
 
   const clearShipping = () => {
     setShippingCost(0);
@@ -127,25 +103,23 @@ export const CartProvider = ({ children }) => {
     if (cart.length === 0) clearShipping();
   }, [cart]);
 
-  // --- MODAL CONTROL ---
-  const openCheckout = () => setIsCheckoutOpen(true);
-  const closeCheckout = () => setIsCheckoutOpen(false);
-
   return (
     <CartContext.Provider value={{
       cart,
-      addToCart,
-      removeFromCart,
-      updateQuantity, // <--- Nueva función para el Drawer
-      cartTotal,
-      cartCount,      // <--- Para el icono del Navbar
-      shippingCost,
-      zipCod: zipCode,
       calculateShippingAction,
+      addToCart,
+      cartTotal,
+      removeFromCart,
+      cartTotal,
+      shippingCost,
+      setShippingCost: updateShipping,
+      updateShipping,
+      zipCod: zipCode,
+      setZipCode: handleSetZipCode,
       clearShipping,
       isCheckoutOpen,
       openCheckout,
-      closeCheckout
+      closeCheckout,
     }}>
       {children}
     </CartContext.Provider>
