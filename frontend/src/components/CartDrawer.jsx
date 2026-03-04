@@ -1,4 +1,4 @@
-import { X, Minus, Plus, Trash2 } from 'lucide-react'; // ESTO FALTABA
+import { X, Minus, Plus, Trash2 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useState } from 'react';
 
@@ -53,7 +53,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
                         <h3 className="text-sm font-bold text-slate-800 leading-tight pr-4 uppercase tracking-tight">{item.name}</h3>
                         <button
                           onClick={() => removeFromCart(item._id)}
-                          className="text-slate-300 hover:text-red-500 transition-colors"
+                          className="text-slate-300 hover:text-red-400 transition-colors"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -63,30 +63,28 @@ const CartDrawer = ({ isOpen, onClose }) => {
                       </p>
                     </div>
 
-                    {/* BOTONES DE CANTIDAD - VISIBLES Y OPERATIVOS */}
+                    {/* CONTROLADOR DE CANTIDAD */}
                     <div className="flex items-center justify-between mt-2">
-                      <div className="flex items-center border border-slate-200 rounded-lg bg-slate-50 shadow-sm">
+                      <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-slate-50">
                         <button
                           onClick={() => updateQuantity(item._id, -1)}
-                          className="p-2 hover:bg-white text-slate-600 transition-all border-r border-slate-200"
+                          className="p-1.5 hover:bg-white text-slate-500 transition-colors border-r border-slate-200"
                         >
-                          <Minus size={14} strokeWidth={3} />
+                          <Minus size={14} />
                         </button>
-
-                        <span className="px-4 text-sm font-black text-slate-800 min-w-10 text-center">
+                        <span className="px-3 text-xs font-bold text-slate-700">
                           {item.quantity || 1}
                         </span>
-
                         <button
                           onClick={() => updateQuantity(item._id, 1)}
-                          className="p-2 hover:bg-white text-slate-600 transition-all border-l border-slate-200"
+                          className="p-1.5 hover:bg-white text-slate-500 transition-colors border-l border-slate-200"
                         >
-                          <Plus size={14} strokeWidth={3} />
+                          <Plus size={14} />
                         </button>
                       </div>
 
                       <p className="text-[10px] font-bold text-slate-400 uppercase">
-                        Sub: ${(item.price * (item.quantity || 1)).toLocaleString('es-AR')}
+                        Subt: ${(item.price * (item.quantity || 1)).toLocaleString('es-AR')}
                       </p>
                     </div>
                   </div>
@@ -107,7 +105,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
             </div>
             <div className="text-right">
               <p className="text-[10px] text-slate-400 uppercase font-bold">Envío</p>
-              <p className="text-xs font-black text-emerald-600 uppercase">
+              <p className="text-xs font-bold text-emerald-600">
                 {shippingCost > 0 ? `$${shippingCost.toLocaleString('es-AR')}` : "Gratis"}
               </p>
             </div>
@@ -116,7 +114,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
           <button
             onClick={preCheckout}
             disabled={loading || cart.length === 0}
-            className="w-full bg-[#007f5f] text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg hover:bg-[#00664d] transition-all active:scale-95 disabled:opacity-50"
+            className="w-full bg-[#007f5f] text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-emerald-100 hover:bg-[#00664d] transition-all active:scale-95 disabled:opacity-50"
           >
             {loading ? "Procesando..." : "Iniciar Compra"}
           </button>

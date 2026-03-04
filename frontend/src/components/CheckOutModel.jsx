@@ -141,13 +141,12 @@ const CheckoutModal = () => {
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-4">Resumen de productos</p>
                 <div className="space-y-3">
                   {cart.map((item) => (
-                    <div key={item._id} className="flex justify-between text-sm items-center">
-                      <div className="flex flex-col">
-                        <span className="font-bold text-slate-800 uppercase text-[11px] tracking-tight">{item.name}</span>
-                        <span className="text-[10px] text-slate-400 font-bold uppercase">{item.quantity} Unidad/es</span>
-                      </div>
-                      <span className="font-black text-slate-900">
-                        ${(item.price * (item.quantity || 1)).toLocaleString('es-AR')}
+                    <div key={item._id} className="flex justify-between text-sm">
+                      <span className="text-slate-600">
+                        <span className="font-black text-slate-900">{item.quantity}x</span> {item.name}
+                      </span>
+                      <span className="font-bold text-slate-900">
+                        ${(item.price * item.quantity).toLocaleString('es-AR')}
                       </span>
                     </div>
                   ))}
