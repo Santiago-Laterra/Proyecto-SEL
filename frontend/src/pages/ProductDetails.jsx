@@ -89,6 +89,15 @@ const ProductDetails = () => {
 
   const carouselImages = Array.isArray(product.image) ? product.image : [product.image];
 
+  const handleBuyNow = () => {
+    // 1. Agregamos al carrito
+    addToCart(product);
+
+    // 2. Abrimos el modal de checkout directamente
+    // Usamos el método que ya tenés en el useCart()
+    openCheckout();
+  };
+
   return (
     <div className="min-h-screen bg-white pt-32 pb-20 px-5 md:px-[160.4px] font-proxima">
       <div className="flex flex-col md:flex-row gap-12">
@@ -126,7 +135,7 @@ const ProductDetails = () => {
               Añadir al carrito
             </button>
             <button
-              onClick={() => { addToCart(product); navigate('/carrito'); }}
+              onClick={() => { handleBuyNow }}
               className="w-full border border-[#007f5f] text-[#007f5f] py-4 rounded-md font-bold hover:bg-slate-50 transition-all"
             >
               Compra ahora
