@@ -108,6 +108,7 @@ export const CartProvider = ({ children }) => {
       cart,
       calculateShippingAction,
       addToCart,
+      cartTotal,
       removeFromCart,
       cartTotal,
       shippingCost,
