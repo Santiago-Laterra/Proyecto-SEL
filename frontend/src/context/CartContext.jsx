@@ -3,6 +3,12 @@ import { createContext, useState, useEffect, useContext } from 'react';
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
+
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+
+  const openCheckout = () => setIsCheckoutOpen(true);
+  const closeCheckout = () => setIsCheckoutOpen(false);
+
   // 1. Estado para el Código Postal (con persistencia)
   const [zipCode, setZipCode] = useState(() => {
     return localStorage.getItem('soleyah_zipcode') || '';
@@ -72,7 +78,10 @@ export const CartProvider = ({ children }) => {
       updateShipping,                  // Sincroniza con ProductDetails
       zipCod: zipCode,                 // Usamos zipCod para que CartDrawer no rompa
       setZipCode: handleSetZipCode,    // Sincroniza con ambos
-      clearShipping
+      clearShipping,
+      isCheckoutOpen,
+      openCheckout,
+      closeCheckout,
     }}>
       {children}
     </CartContext.Provider>

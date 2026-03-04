@@ -7,6 +7,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
   const { cart, removeFromCart, cartTotal, shippingCost, zipCod } = useCart();
   const [loading, setLoading] = useState(false);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const { openCheckout } = useCart();
 
   const [address, setAddress] = useState({
     street: '',
@@ -39,7 +40,10 @@ const CartDrawer = ({ isOpen, onClose }) => {
 
   const preCheckout = () => {
     if (cart.length === 0) return;
-    setIsAddressModalOpen(true);
+    onClose(); // Primero cerramos el Drawer
+    setTimeout(() => {
+      openCheckout(); // Después abrimos el nuevo Modal
+    }, 300);
   };
 
   const handleConfirmPurchase = async (e) => {
@@ -141,70 +145,6 @@ const CartDrawer = ({ isOpen, onClose }) => {
             {loading ? "PROCESANDO..." : "IR AL PAGO"}
           </button>
         </div>
-
-        {/* Modal de Dirección: Se mantiene exactamente igual a tu versión */}
-        {isAddressModalOpen && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-200 flex items-center justify-center p-4">
-            <div className="bg-white rounded-3xl p-6 md:p-10 max-w-lg w-full shadow-2xl max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-serif text-slate-800 text-center mb-6">Detalles de Entrega</h2>
-              <form onSubmit={handleConfirmPurchase} className="space-y-5">
-                <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Localidad (CP: {zipCod})</label>
-                  <select className="w-full border-b border-slate-200 py-2 outline-none focus:border-[#007f5f] bg-transparent text-sm"
-                    value={address.city} onChange={(e) => setAddress({ ...address, city: e.target.value })}>
-                    {CP_A_OPCIONES[zipCod]?.map(opc => (
-                      <option key={opc} value={opc}>{opc}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="grid grid-cols-4 gap-4">
-                  <div className="col-span-3">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Calle</label>
-                    <input required type="text" className="w-full border-b border-slate-200 py-2 outline-none focus:border-[#007f5f] text-sm"
-                      value={address.street} onChange={(e) => setAddress({ ...address, street: e.target.value })} />
-                  </div>
-                  <div className="col-span-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Nro</label>
-                    <input required type="number" className="w-full border-b border-slate-200 py-2 outline-none focus:border-[#007f5f] text-center text-sm"
-                      value={address.number} onChange={(e) => setAddress({ ...address, number: e.target.value })} />
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <button type="button" onClick={() => setAddress({ ...address, type: 'casa' })}
-                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border transition-all ${address.type === 'casa' ? 'border-[#007f5f] bg-emerald-50 text-[#007f5f]' : 'border-slate-100 text-slate-400'}`}>
-                    <Home size={18} /> <span className="text-[10px] font-bold uppercase">Casa</span>
-                  </button>
-                  <button type="button" onClick={() => setAddress({ ...address, type: 'depto' })}
-                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border transition-all ${address.type === 'depto' ? 'border-[#007f5f] bg-emerald-50 text-[#007f5f]' : 'border-slate-100 text-slate-400'}`}>
-                    <Building2 size={18} /> <span className="text-[10px] font-bold uppercase">Depto</span>
-                  </button>
-                </div>
-                {address.type === 'depto' && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Piso</label>
-                      <input required type="text" className="w-full border-b border-slate-200 py-2 outline-none focus:border-[#007f5f] text-center text-sm"
-                        value={address.floor} onChange={(e) => setAddress({ ...address, floor: e.target.value })} />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Depto</label>
-                      <input required type="text" className="w-full border-b border-slate-200 py-2 outline-none focus:border-[#007f5f] text-center text-sm"
-                        value={address.apartment} onChange={(e) => setAddress({ ...address, apartment: e.target.value })} />
-                    </div>
-                  </div>
-                )}
-                <div className="pt-4">
-                  <button type="submit" disabled={loading} className="w-full py-4 bg-[#007f5f] text-white font-bold rounded-xl shadow-lg uppercase text-xs">
-                    Confirmar Compra
-                  </button>
-                  <button type="button" onClick={() => setIsAddressModalOpen(false)} className="w-full py-2 text-slate-400 text-[10px] font-bold uppercase mt-2">
-                    Cerrar
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
       </div>
     </>
   );
