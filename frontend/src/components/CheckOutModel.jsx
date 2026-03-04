@@ -173,7 +173,7 @@ const CheckoutModal = () => {
               <button onClick={handleFinalPayment} disabled={loading} className="w-full py-5 bg-[#007f5f] text-white font-black rounded-2xl shadow-xl flex items-center justify-center gap-3 uppercase text-xs tracking-widest">
                 <CreditCard size={18} /> {loading ? "PROCESANDO..." : "Pagar"}
               </button>
-              <button onClick={() => setIsStepConfirmed(false)} className="w-full py-4 bg-white border-2 border-slate-100 text-slate-400 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-sky-300 transition-all uppercase text-[10px] tracking-widest">
+              <button onClick={() => setIsStepConfirmed(false)} className="w-full py-4 bg-white border-2 border-slate-100 text-slate-400 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-slate-50 transition-all uppercase text-[10px] tracking-widest">
                 <Edit3 size={16} /> Modificar Envío
               </button>
             </div>
