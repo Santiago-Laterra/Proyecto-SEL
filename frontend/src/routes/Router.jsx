@@ -13,11 +13,13 @@ import ProductDetails from '../pages/ProductDetails';
 import Contact from '../components/Contact'; // Agregado
 import ForgotPassword from '../components/ForgotPasswords'; // Asegúrate de que la ruta sea correcta
 import ResetPassword from '../components/ResetPassword';
-import CheckoutModal from './components/CheckoutModal';
+import CheckoutModal from '../components/CheckOutModel';
 
 const RouterApp = () => {
   return (
     <BrowserRouter>
+      {/* COMPONENTE GLOBAL:*/}
+      <CheckoutModal />
       <Header />
       <Routes>
         {/* Rutas Públicas */}
@@ -49,8 +51,7 @@ const RouterApp = () => {
       </Routes>
       <Footer />
 
-      {/* COMPONENTE GLOBAL:*/}
-      <CheckoutModal />
+
     </BrowserRouter>
   );
 };

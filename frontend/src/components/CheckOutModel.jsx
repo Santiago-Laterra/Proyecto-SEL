@@ -31,6 +31,8 @@ const CheckoutModal = () => {
     }
   }, [isCheckoutOpen, zipCod]);
 
+  console.log(isCheckoutOpen)
+
   if (!isCheckoutOpen) return null;
 
   const handleConfirmPurchase = async (e) => {
@@ -47,27 +49,33 @@ const CheckoutModal = () => {
 
       const payload = {
         items: cart.map(item => ({
-          id: item._id,
+          id: item._id, // Mercado Pago necesita ID
           title: item.name,
           unit_price: Number(item.price),
-          quantity: 1,
-          currency_id: "ARS"
+          quantity: 1
         })),
         shippingCost: Number(shippingCost),
         userId: userData.id || userData._id,
-        phoneNumber: address.phoneNumber,
+        phoneNumber: address.phoneNumber, // <--- ESTO DEBE SER STRING
         shippingAddress: {
-          ...address,
+          street: address.street,
+          number: address.number,
+          city: address.city,
           zipCode: zipCod,
-          fullAddress: `${address.street} ${address.number}${extraInfo}, ${address.city}`
+          type: address.type,
+          floor: address.floor,
+          apartment: address.apartment
         }
       };
 
+
+
       const response = await api.post('/payments/create-preference', payload);
       if (response.data.init_point) window.location.href = response.data.init_point;
+      // CAMBIO EN EL CATCH PARA DEBUGGEAR:
     } catch (error) {
-      console.error("Error en pago:", error);
-      alert("Error al procesar el pago");
+      console.error("DETALLE DEL ERROR:", error.response?.data || error.message);
+      alert(`Error: ${error.response?.data?.message || "Revisá los datos del formulario"}`);
     } finally {
       setLoading(false);
     }

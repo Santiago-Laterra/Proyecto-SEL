@@ -27,14 +27,24 @@ export const createPreference = async (req: Request, res: Response) => {
     console.log("=== 2. INTENTANDO GUARDAR ORDEN EN MONGO ===");
     const newOrder = new Order({
       user: userId,
-      items: items,
-      shippingAddress: shippingAddress,
+      items: items.map((item: any) => ({
+        title: item.title,
+        quantity: Number(item.quantity),
+        unit_price: Number(item.unit_price)
+      })), // Mapeamos para que coincida con el IOrder
+      shippingAddress: {
+        street: shippingAddress.street,
+        number: shippingAddress.number,
+        city: shippingAddress.city,
+        zipCode: shippingAddress.zipCode,
+        notes: shippingAddress.type === 'depto' ? `Piso: ${shippingAddress.floor} Depto: ${shippingAddress.apartment}` : ''
+      },
       shippingCost: Number(shippingCost) || 0,
       totalAmount: totalAmount,
       status: 'pending',
-      orderNumber: orderNumber, // Guardamos el número nuevo
-      shippingStatus: 'Por empaquetar', // Estado inicial por defecto
-      phoneNumber: phoneNumber
+      orderNumber: orderNumber,
+      shippingStatus: 'Por empaquetar',
+      phoneNumber: phoneNumber // <-- Esto es lo que hacía fallar el Status 500
     });
 
     const savedOrder = await newOrder.save();
