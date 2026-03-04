@@ -10,7 +10,9 @@ const client = new MercadoPagoConfig({
 
 export const createPreference = async (req: Request, res: Response) => {
   try {
-    const { items, shippingAddress, shippingCost, userId } = req.body;
+    const { items, shippingAddress, shippingCost, userId, phoneNumber } = req.body;
+
+    console.log("Teléfono recibido:", phoneNumber);
 
     console.log("=== 1. DATOS RECIBIDOS DEL FRONTEND ===");
     const itemsTotal = items.reduce((acc: number, item: any) => acc + (item.unit_price * item.quantity), 0);
@@ -32,7 +34,7 @@ export const createPreference = async (req: Request, res: Response) => {
       status: 'pending',
       orderNumber: orderNumber, // Guardamos el número nuevo
       shippingStatus: 'Por empaquetar', // Estado inicial por defecto
-      phoneNumber: req.body.phoneNumber
+      phoneNumber: phoneNumber
     });
 
     const savedOrder = await newOrder.save();

@@ -1,10 +1,10 @@
-import { X, Building2, Home, Phone } from 'lucide-react';
+import { X, Building2, Home } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 
 const CheckoutModal = () => {
-  const { isCheckoutOpen, closeCheckout, cart, cartTotal, shippingCost, zipCod } = useCart();
+  const { isCheckoutOpen, closeCheckout, cart, shippingCost, zipCod } = useCart();
   const [loading, setLoading] = useState(false);
   const [address, setAddress] = useState({
     street: '', number: '', city: '', type: 'casa', floor: '', apartment: '', phoneNumber: ''
@@ -24,11 +24,12 @@ const CheckoutModal = () => {
     "1870": ["Avellaneda Centro"], "1846": ["Adrogué"]
   };
 
+  // Sincronizar ciudad cuando se abre el modal o cambia el CP
   useEffect(() => {
-    if (zipCod && CP_A_OPCIONES[zipCod]) {
+    if (isCheckoutOpen && zipCod && CP_A_OPCIONES[zipCod]) {
       setAddress(prev => ({ ...prev, city: CP_A_OPCIONES[zipCod][0] }));
     }
-  }, [zipCod]);
+  }, [isCheckoutOpen, zipCod]);
 
   if (!isCheckoutOpen) return null;
 
@@ -37,12 +38,20 @@ const CheckoutModal = () => {
     setLoading(true);
     try {
       const userRaw = localStorage.getItem('user');
+      if (!userRaw) {
+        alert("Por favor, inicia sesión para continuar");
+        return;
+      }
       const userData = JSON.parse(userRaw);
       const extraInfo = address.type === 'depto' ? ` - P: ${address.floor} D: ${address.apartment}` : '';
 
       const payload = {
         items: cart.map(item => ({
-          id: item._id, title: item.name, unit_price: Number(item.price), quantity: 1, currency_id: "ARS"
+          id: item._id,
+          title: item.name,
+          unit_price: Number(item.price),
+          quantity: 1,
+          currency_id: "ARS"
         })),
         shippingCost: Number(shippingCost),
         userId: userData.id || userData._id,
@@ -53,9 +62,11 @@ const CheckoutModal = () => {
           fullAddress: `${address.street} ${address.number}${extraInfo}, ${address.city}`
         }
       };
+
       const response = await api.post('/payments/create-preference', payload);
       if (response.data.init_point) window.location.href = response.data.init_point;
     } catch (error) {
+      console.error("Error en pago:", error);
       alert("Error al procesar el pago");
     } finally {
       setLoading(false);
@@ -63,7 +74,7 @@ const CheckoutModal = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-300 flex items-center justify-center p-4 animate-in fade-in duration-300">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-999 flex items-center justify-center p-4 animate-in fade-in duration-300">
       <div className="bg-white rounded-[40px] p-8 md:p-12 max-w-lg w-full shadow-2xl relative animate-in zoom-in-95 duration-300">
         <button onClick={closeCheckout} className="absolute right-6 top-6 text-slate-300 hover:text-slate-800 transition-colors">
           <X size={28} />
@@ -78,9 +89,17 @@ const CheckoutModal = () => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Localidad (CP: {zipCod})</label>
-              <select className="w-full border-b border-slate-200 py-2 outline-none focus:border-[#007f5f] bg-transparent text-sm"
-                value={address.city} onChange={(e) => setAddress({ ...address, city: e.target.value })}>
-                {CP_A_OPCIONES[zipCod]?.map(opc => <option key={opc} value={opc}>{opc}</option>)}
+              <select
+                required
+                className="w-full border-b border-slate-200 py-2 outline-none focus:border-[#007f5f] bg-transparent text-sm"
+                value={address.city}
+                onChange={(e) => setAddress({ ...address, city: e.target.value })}
+              >
+                {CP_A_OPCIONES[zipCod] ? (
+                  CP_A_OPCIONES[zipCod].map(opc => <option key={opc} value={opc}>{opc}</option>)
+                ) : (
+                  <option value="">Seleccionar...</option>
+                )}
               </select>
             </div>
             <div>
@@ -90,6 +109,7 @@ const CheckoutModal = () => {
             </div>
           </div>
 
+          {/* Resto del formulario igual... */}
           <div className="grid grid-cols-4 gap-4">
             <div className="col-span-3">
               <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Calle</label>

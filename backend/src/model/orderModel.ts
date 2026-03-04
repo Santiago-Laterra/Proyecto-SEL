@@ -2,23 +2,27 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 
 export interface IOrder extends Document {
-  user: mongoose.Types.ObjectId;      // Quién compró
+  user: mongoose.Types.ObjectId;
   items: Array<{
     title: string;
     quantity: number;
     unit_price: number;
   }>;
-  shippingAddress: {                  // Datos para la logística de la Admin
+  shippingAddress: {
     street: string;
     number: string;
-    city: string;                     // Ej: "Lugano"
+    city: string;
     zipCode: string;
-    notes?: string;                   // Ej: "Timbre que no anda" o "Dejar en portería"
+    notes?: string;
   };
-  shippingCost: number;               // Cuánto cobró por el envío
-  totalAmount: number;                // Precio total (Productos + Envío)
-  status: 'pending' | 'approved' | 'rejected'; // Estado del pago
-  mpPreferenceId: string;             // Para rastrear con Mercado Pago
+  shippingCost: number;
+  totalAmount: number;
+  status: 'pending' | 'approved' | 'rejected';
+  mpPreferenceId?: string; // Opcional porque se crea después
+  // --- AGREGAR ESTO ---
+  orderNumber: string;
+  shippingStatus: 'Por empaquetar' | 'Empaquetado' | 'Despachado';
+  phoneNumber: string;
   createdAt: Date;
 }
 

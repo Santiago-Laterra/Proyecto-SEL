@@ -1,39 +1,21 @@
-import { X, Building2, Home } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useState, useEffect } from 'react';
-import api from '../services/api';
+
 
 const CartDrawer = ({ isOpen, onClose }) => {
   const { cart, removeFromCart, cartTotal, shippingCost, zipCod } = useCart();
   const [loading, setLoading] = useState(false);
   const { openCheckout } = useCart();
 
-  const CP_A_OPCIONES = {
-    "1173": ["Almagro"], "1428": ["Belgrano", "Colegiales"], "1218": ["Boedo"],
-    "1405": ["Caballito"], "1133": ["Constitución", "San Telmo", "Monserrat"],
-    "1406": ["Flores", "Parque Chacabuco"], "1407": ["Floresta", "Parque Avellaneda"],
-    "1408": ["Liniers"], "1437": ["Nueva Pompeya", "Parque Patricios"],
-    "1429": ["Núñez"], "1425": ["Palermo"], "1430": ["Saavedra", "Villa Pueyrredón"],
-    "1224": ["San Cristóbal"], "1001": ["San Nicolás"], "1414": ["Villa Crespo"],
-    "1417": ["Villa del Parque", "Villa General Mitre"], "1419": ["Villa Devoto"],
-    "1439": ["Villa Lugano"], "1431": ["Villa Urquiza"], "1824": ["Lanús", "Gerli"],
-    "1826": ["Remedios de Escalada"], "1828": ["Banfield"], "1832": ["Lomas de Zamora", "Banfield"],
-    "1834": ["Temperley", "Turdera"], "1836": ["Llavallol"], "1842": ["Monte Grande", "Luis Guillón"],
-    "1870": ["Avellaneda Centro"], "1846": ["Adrogué"]
-  };
-
-  useEffect(() => {
-    if (zipCod && CP_A_OPCIONES[zipCod]) {
-      setAddress(prev => ({ ...prev, city: CP_A_OPCIONES[zipCod][0] }));
-    }
-  }, [zipCod]);
-
   const preCheckout = () => {
     if (cart.length === 0) return;
-    onClose(); // Primero cerramos el Drawer
+    onClose(); // Cerramos el Drawer
+
+    // Tiempo suficiente para que la animación de cierre no choque con la de apertura
     setTimeout(() => {
-      openCheckout(); // Después abrimos el nuevo Modal
-    }, 300);
+      openCheckout();
+    }, 200);
   };
 
   return (

@@ -17,14 +17,14 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Si el backend devuelve 401 (No autorizado)
-    if (error.response && error.response.status === 401) {
-      const msg = error.response.data.message || "Sesión expirada";
-      alert(msg);
-
-      // Limpiamos los datos y mandamos al Login
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+    // Agregamos comprobaciones de seguridad para que no explote si no hay respuesta
+    if (error.response) {
+      if (error.response.status === 401) {
+        const msg = error.response.data?.message || "Sesión expirada"; // Usar ?. es clave
+        alert(msg);
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
