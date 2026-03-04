@@ -1,18 +1,15 @@
-import { X } from 'lucide-react';
+import { X, Minus, Plus } from 'lucide-react'; // Agregamos Minus y Plus
 import { useCart } from '../context/CartContext';
 import { useState } from 'react';
 
 const CartDrawer = ({ isOpen, onClose }) => {
-  const { cart, removeFromCart, cartTotal, shippingCost } = useCart();
+  const { cart, removeFromCart, updateQuantity, cartTotal, shippingCost, openCheckout } = useCart();
   const [loading] = useState(false);
-  const { openCheckout } = useCart();
 
   const preCheckout = () => {
     if (cart.length === 0) return;
     onClose();
-    setTimeout(() => {
-      openCheckout();
-    }, 200);
+    setTimeout(() => { openCheckout(); }, 200);
   };
 
   return (
@@ -31,11 +28,20 @@ const CartDrawer = ({ isOpen, onClose }) => {
             <div className="space-y-6">
               {cart.map((item) => (
                 <div key={item._id} className="flex gap-4 group">
-                  <img src={item.image[0]} alt={item.name} className="w-20 h-20 object-cover rounded-xl" />
+                  <img src={Array.isArray(item.image) ? item.image[0] : item.image} alt={item.name} className="w-20 h-20 object-cover rounded-xl" />
                   <div className="flex-1">
-                    <h3 className="text-sm font-medium text-slate-800">{item.name}</h3>
+                    <h3 className="text-sm font-medium text-slate-800 uppercase">{item.name}</h3>
                     <p className="text-slate-900 font-bold">${Number(item.price).toLocaleString('es-AR')}</p>
-                    <button onClick={() => removeFromCart(item._id)} className="text-[10px] text-red-400 uppercase font-bold mt-2">Eliminar</button>
+
+                    {/* BOTONES DE CANTIDAD - DISEÑO RESPETUOSO */}
+                    <div className="flex items-center gap-3 mt-2">
+                      <div className="flex items-center border border-slate-200 rounded-lg">
+                        <button onClick={() => updateQuantity(item._id, -1)} className="p-1 hover:bg-slate-50 text-slate-500 border-r border-slate-200"><Minus size={12} /></button>
+                        <span className="px-3 text-xs font-bold text-slate-700">{item.quantity || 1}</span>
+                        <button onClick={() => updateQuantity(item._id, 1)} className="p-1 hover:bg-slate-50 text-slate-500 border-l border-slate-200"><Plus size={12} /></button>
+                      </div>
+                      <button onClick={() => removeFromCart(item._id)} className="text-[10px] text-red-400 uppercase font-bold">Eliminar</button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -45,21 +51,15 @@ const CartDrawer = ({ isOpen, onClose }) => {
 
         <div className="absolute bottom-0 left-0 w-full bg-white border-t border-gray-100 p-4 md:p-6 shadow-[0_-10px_30px_rgba(0,0,0,0.08)] z-20 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <div className="flex justify-between items-center mb-4">
-            <div>
-              <p className="text-[10px] text-slate-400 uppercase font-bold">Total a pagar</p>
+            <div><p className="text-[10px] text-slate-400 uppercase font-bold">Total a pagar</p>
               <p className="text-xl font-bold text-slate-900">${(cartTotal + (shippingCost || 0)).toLocaleString('es-AR')}</p>
             </div>
-            <div className="text-right">
-              <p className="text-[10px] text-slate-400 uppercase font-bold">Envío</p>
+            <div className="text-right"><p className="text-[10px] text-slate-400 uppercase font-bold">Envío</p>
               <p className="text-xs font-semibold text-slate-600">{shippingCost > 0 ? `$${shippingCost}` : "Gratis"}</p>
             </div>
           </div>
-
-          <button
-            onClick={preCheckout}
-            disabled={loading || cart.length === 0}
-            className="w-full bg-[#007f5f] text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-[#00664d] transition-all disabled:opacity-50"
-          >
+          <button onClick={preCheckout} disabled={loading || cart.length === 0}
+            className="w-full bg-[#007f5f] text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-[#00664d] transition-all disabled:opacity-50">
             CONFIRMAR ENVÍO
           </button>
         </div>
@@ -67,5 +67,4 @@ const CartDrawer = ({ isOpen, onClose }) => {
     </>
   );
 };
-
 export default CartDrawer;
