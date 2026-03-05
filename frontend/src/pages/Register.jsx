@@ -27,7 +27,7 @@ const Register = () => {
         password: formData.password
       };
 
-      console.log("Enviando a backend:", userData);
+
 
       const response = await api.post('/auth/register', userData);
 
@@ -35,7 +35,7 @@ const Register = () => {
       navigate('/login');
     } catch (err) {
       console.error("Error capturado:", err.response?.data);
-      showAlert(err.response?.data?.message || "Error al registrarse", "error al registrarse", "error");
+      showAlert("Error al registrarse", "error al registrarse", "error");
     } finally {
       setLoading(false);
     }
