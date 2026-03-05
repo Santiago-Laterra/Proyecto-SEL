@@ -95,7 +95,7 @@ const AdminDashboard = () => {
 
         // Actualizamos la lista local eliminando la orden borrada
         setOrders(orders.filter(order => order._id !== id));
-        showAlert("Orden eliminada correctamente", "Toast");
+        showAlert("Orden eliminada correctamente", "success");
       } catch (error) {
         console.error("Error al borrar orden:", error);
         showAlert("No se pudo eliminar la orden. Revisa los permisos del admin.", "warning");
@@ -115,7 +115,7 @@ const AdminDashboard = () => {
       );
       setOrders(orders.map(o => o._id === orderId ? { ...o, shippingStatus: newStatus } : o));
       if (newStatus === 'Despachado') {
-        showAlert("¡Pedido despachado! Mail enviado.", "Toast");
+        showAlert("¡Pedido despachado! Mail enviado.", "success");
       }
     } catch (error) {
       showAlert("Error al actualizar envío.", "error");
@@ -143,7 +143,7 @@ const AdminDashboard = () => {
 
       setEditingProduct(null);
       fetchProducts();
-      showAlert("¡Actualizado!", "Toast");
+      showAlert("¡Actualizado!", "success");
     } catch (error) {
       showAlert("Error al actualizar", "error");
     } finally {

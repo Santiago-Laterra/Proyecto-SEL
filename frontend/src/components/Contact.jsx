@@ -29,7 +29,7 @@ const Contact = () => {
     emailjs.send(serviceID, templateID, templateParams, publicKey)
       .then((result) => {
         console.log('EXITO:', result.text);
-        showAlert("¡Mensaje enviado con éxito!", "Toast");
+        showAlert("¡Mensaje enviado con éxito!", "success");
         setFormData({ nombre: '', apellidos: '', email: '', mensaje: '' });
       })
       .catch((err) => {

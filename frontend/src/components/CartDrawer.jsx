@@ -1,6 +1,7 @@
 import { X, Minus, Plus } from 'lucide-react'; // Agregamos Minus y Plus
 import { useCart } from '../context/CartContext';
 import { useState } from 'react';
+import showAlert from "../utils/alerts"
 
 const CartDrawer = ({ isOpen, onClose }) => {
   const { cart, removeFromCart, updateQuantity, cartTotal, shippingCost, openCheckout } = useCart();

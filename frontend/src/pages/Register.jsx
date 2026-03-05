@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-
+import showAlert from "../utils/alerts"
 const Register = () => {
   const [formData, setFormData] = useState({
     firstName: '',
@@ -31,7 +31,7 @@ const Register = () => {
 
       const response = await api.post('/auth/register', userData);
 
-      ashowAlertlert("¡Cuenta creada con éxito! Bienvenida a SeloYah.", "Toast");
+      ashowAlertlert("¡Cuenta creada con éxito! Bienvenida a SeloYah.", "success");
       navigate('/login');
     } catch (err) {
       console.error("Error capturado:", err.response?.data);

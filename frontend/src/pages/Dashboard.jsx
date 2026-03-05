@@ -4,6 +4,7 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import * as XLSX from 'xlsx';
 import { X, ImagePlus, FileSpreadsheet, Loader2 } from 'lucide-react';
+import { showAlert } from '../utils/alerts';
 
 const Dashboard = () => {
   const { isAdmin } = useAuth();
@@ -45,7 +46,7 @@ const Dashboard = () => {
           await api.post('/products/import', jsonData, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
-          showAlert("¡Importación masiva exitosa! 🚀", "Toast");
+          showAlert("¡Importación masiva exitosa! 🚀", "success");
           navigate('/admin');
         }
       } catch (error) {
@@ -95,7 +96,7 @@ const Dashboard = () => {
 
     try {
       await api.post('/products/add', data);
-      showAlert("¡Producto cargado con éxito!", "Toast");
+      showAlert("¡Producto cargado con éxito!", "success");
       setFormData({ name: '', description: '', price: '', stock: '0', category: '' });
       setFiles([]);
       setPreviews([]);
