@@ -95,10 +95,10 @@ const AdminDashboard = () => {
 
         // Actualizamos la lista local eliminando la orden borrada
         setOrders(orders.filter(order => order._id !== id));
-        showAlert("Orden eliminada correctamente", "success");
+        showAlert("Orden eliminada ", "La orden se elimino correctamente", "success");
       } catch (error) {
         console.error("Error al borrar orden:", error);
-        showAlert("No se pudo eliminar la orden. Revisa los permisos del admin.", "warning");
+        showAlert("error", "No se pudo eliminar la orden. Revisa los permisos del admin.", "warning");
       } finally {
         setLoading(false);
       }
@@ -143,9 +143,9 @@ const AdminDashboard = () => {
 
       setEditingProduct(null);
       fetchProducts();
-      showAlert("¡Actualizado!", "success");
+      showAlert("¡Actualizado!", "El producto se actualizo correctamente", "success");
     } catch (error) {
-      showAlert("Error al actualizar", "error");
+      showAlert("Error al actualizar", "No se pudo actualizar", "error");
     } finally {
       setLoading(false);
     }
@@ -157,7 +157,7 @@ const AdminDashboard = () => {
         const token = localStorage.getItem('token');
         await api.delete(`/products/${id}`, { headers: { 'Authorization': `Bearer ${token}` } });
         fetchProducts();
-      } catch (error) { showAlert("Error", "error"); }
+      } catch (error) { showAlert("Error", "Error!!", "error"); }
     }
   };
 

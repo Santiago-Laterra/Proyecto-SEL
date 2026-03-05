@@ -35,7 +35,7 @@ const Register = () => {
       navigate('/login');
     } catch (err) {
       console.error("Error capturado:", err.response?.data);
-      showAlert(err.response?.data?.message || "Error al registrarse", "error");
+      showAlert(err.response?.data?.message || "Error al registrarse", "error al registrarse", "error");
     } finally {
       setLoading(false);
     }
