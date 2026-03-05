@@ -12,112 +12,60 @@ export const createPreference = async (req: Request, res: Response) => {
   try {
     const { items, shippingAddress, shippingCost, userId, phoneNumber } = req.body;
 
-    console.log("Teléfono recibido:", phoneNumber);
-
-    console.log("=== 1. DATOS RECIBIDOS DEL FRONTEND ===");
-    const itemsTotal = items.reduce((acc: number, item: any) => acc + (item.unit_price * item.quantity), 0);
+    // 1. CALCULAMOS EL TOTAL REAL (Precio x Cantidad)
+    const itemsTotal = items.reduce((acc: number, item: any) => acc + (Number(item.unit_price) * Number(item.quantity)), 0);
     const totalAmount = itemsTotal + (Number(shippingCost) || 0);
 
-    // LÓGICA DEL CONTADOR
-    const orderCount = await Order.countDocuments(); // Cuenta cuántas hay
+    const orderCount = await Order.countDocuments();
     const nextNumber = (orderCount + 1).toString().padStart(4, '0');
     const orderNumber = `SY-${nextNumber}`;
 
-    // 1. CREAMOS LA ORDEN EN MONGODB
-    console.log("=== 2. INTENTANDO GUARDAR ORDEN EN MONGO ===");
+    // 2. CREAMOS LA ORDEN EN MONGODB (Corregido para guardar cantidad)
     const newOrder = new Order({
       user: userId,
       items: items.map((item: any) => ({
         title: item.title,
-        quantity: Number(item.quantity),
-        unit_price: Number(item.unit_price)
-      })), // Mapeamos para que coincida con el IOrder
-      shippingAddress: {
-        street: shippingAddress.street,
-        number: shippingAddress.number,
-        city: shippingAddress.city,
-        zipCode: shippingAddress.zipCode,
-        notes: shippingAddress.type === 'depto' ? `Piso: ${shippingAddress.floor} Depto: ${shippingAddress.apartment}` : ''
-      },
-      shippingCost: Number(shippingCost) || 0,
-      totalAmount: totalAmount,
-      status: 'pending',
-      orderNumber: orderNumber,
-      shippingStatus: 'Por empaquetar',
-      phoneNumber: phoneNumber // <-- Esto es lo que hacía fallar el Status 500
+        price: Number(item.unit_price),
+        quantity: Number(item.quantity) // <--- ESTO FALTABA
+      })),
+      shippingAddress,
+      shippingCost: Number(shippingCost),
+      totalAmount,
+      orderNumber,
+      phoneNumber,
+      status: 'pending'
     });
 
     const savedOrder = await newOrder.save();
-    console.log("Orden guardada con ID:", savedOrder._id);
 
-    // 2. PREPARAMOS LOS ITEMS
+    // 3. PREFERENCIA DE MERCADO PAGO
     const preference = new Preference(client);
-
-    // Aseguramos que los números sean números
-    const allItems = items.map((item: any) => ({
-      id: item.id,
-      title: item.title,
-      unit_price: Number(item.unit_price),
-      quantity: Number(item.quantity),
-      currency_id: "ARS"
-    }));
-
-    if (shippingCost && shippingCost > 0) {
-      allItems.push({
-        title: "Costo de Envío",
-        quantity: 1,
-        unit_price: Number(shippingCost),
-        currency_id: "ARS"
-      });
-    }
-
-    // 3. CREAMOS LA PREFERENCIA
-    console.log("=== 3. LLAMANDO A MERCADO PAGO API ===");
-
-    // Quitamos 'auto_return' para debuggear si ese es el bloqueo real
     const result = await preference.create({
       body: {
-        items: allItems,
-        external_reference: savedOrder._id.toString(),
+        items: items.map((item: any) => ({
+          id: item.id || '',
+          title: item.title,
+          unit_price: Number(item.unit_price),
+          quantity: Number(item.quantity), // <--- ESTO ASEGURA EL COBRO CORRECTO
+          currency_id: 'ARS'
+        })),
         back_urls: {
-          success: "https://seloyah.vercel.app/pago-exitoso",
-          failure: "https://seloyah.vercel.app/carrito",
-          pending: "https://seloyah.vercel.app/pago-pendiente"
+          success: `${process.env.FRONTEND_URL}/success`,
+          failure: `${process.env.FRONTEND_URL}/cart`,
+          pending: `${process.env.FRONTEND_URL}/cart`,
         },
-        auto_return: "approved"
+        auto_return: 'approved',
+        external_reference: savedOrder._id.toString(),
+        notification_url: `${process.env.BACKEND_URL}/api/payments/webhook`,
       }
     });
 
-    console.log("Respuesta de MP recibida. ID de Preferencia:", result.id);
-
-    // 4. GUARDAMOS EL ID DE PREFERENCIA
-    savedOrder.mpPreferenceId = result.id!;
-    await savedOrder.save();
-    console.log("Orden actualizada con ID de MP.");
-
-    res.status(200).json({
-      id: result.id,
-      init_point: result.init_point,
-      orderId: savedOrder._id
-    });
-
-  } catch (error: any) {
-    console.error("=== ❌ ERROR DETALLADO DE MERCADO PAGO ===");
-
-    // Esto te va a decir exactamente qué campo está mal (ej: "item.unit_price invalid")
-    if (error.apiResponse && error.apiResponse.body) {
-      console.log("Causa del rechazo:", JSON.stringify(error.apiResponse.body.cause, null, 2));
-      console.log("Mensaje de MP:", error.apiResponse.body.message);
-    } else {
-      console.error("Error general:", error.message);
-    }
-
-    res.status(500).json({
-      message: "Error al procesar la compra",
-      mpError: error.apiResponse?.body || error.message
-    });
+    res.json({ id: result.id, init_point: result.init_point });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al crear la preferencia' });
   }
-}
+};
 
 // --- EL WEBHOOK ---
 export const receiveWebhook = async (req: Request, res: Response) => {

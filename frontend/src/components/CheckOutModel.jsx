@@ -58,20 +58,34 @@ const CheckoutModal = () => {
     try {
       const userRaw = localStorage.getItem('user');
       if (!userRaw) {
-        return showAlert("¡Inicia Sesión!", "Necesitas estar logueado para finalizar la compra.", "warning");
+        return showAlert("Atención", "Inicia sesión para finalizar la compra", "warning");
       }
+
       const userData = JSON.parse(userRaw);
 
+      // Mapeamos el carrito al formato que espera tu backend
+      const itemsParaPago = cart.map(item => ({
+        title: item.name,
+        unit_price: Number(item.price),
+        quantity: Number(item.quantity || 1)
+      }));
+
+      // Si hay costo de envío, lo sumamos como un item o lo pasamos por separado
+      // Tu backend actual lo suma al totalAmount, así que lo pasamos así:
       const response = await api.post('/payments/create-preference', {
-        items: cart.map(item => ({ id: item._id, title: item.name, unit_price: Number(item.price), quantity: Number(item.quantity || 1) })),
-        shippingCost: Number(shippingCost),
-        userId: userData.id || userData._id,
-        phoneNumber: address.phoneNumber,
-        shippingAddress: { ...address, zipCode: zipCod }
+        items: itemsParaPago,
+        shippingCost: shippingCost,
+        shippingAddress: `${address.street} ${address.number}, ${address.city}`,
+        userId: userData._id,
+        phoneNumber: address.phoneNumber
       });
-      if (response.data.init_point) window.location.href = response.data.init_point;
+
+      if (response.data.init_point) {
+        window.location.href = response.data.init_point;
+      }
     } catch (error) {
-      showAlert("Error de Pago", "No pudimos conectar con Mercado Pago. Reintenta en unos instantes.", "error");
+      console.error("Error pago:", error);
+      showAlert("Error", "No se pudo procesar el pago", "error");
     } finally {
       setLoading(false);
     }
