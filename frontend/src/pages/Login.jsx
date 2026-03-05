@@ -22,9 +22,6 @@ const Login = () => {
       // 1. Extraemos el mensaje real del backend si existe
       const mensajeError = err.response?.data?.message || "Correo o contraseña incorrectos";
 
-      // 2. Actualizamos el estado para que se vea tu diseño de cuadro rojo
-      setError(mensajeError);
-
       // 3. Disparamos el Alert visual (Asegúrate de que showAlert esté bien importado)
       showAlert(
         "Error de acceso",
