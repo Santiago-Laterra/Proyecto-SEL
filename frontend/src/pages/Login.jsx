@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import { showAlert } from "../utils/alerts";
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -12,13 +13,24 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError(''); // Limpiamos errores previos
 
     try {
       await login(email, password);
       navigate('/');
     } catch (err) {
-      setError(typeof err === 'string' ? err : "Correo o contraseña incorrectos");
+      // 1. Extraemos el mensaje real del backend si existe
+      const mensajeError = err.response?.data?.message || "Correo o contraseña incorrectos";
+
+      // 2. Actualizamos el estado para que se vea tu diseño de cuadro rojo
+      setError(mensajeError);
+
+      // 3. Disparamos el Alert visual (Asegúrate de que showAlert esté bien importado)
+      showAlert(
+        "Error de acceso",
+        mensajeError,
+        "error"
+      );
     }
   };
 

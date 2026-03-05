@@ -98,7 +98,7 @@ const AdminDashboard = () => {
         showAlert("Orden eliminada ", "La orden se elimino correctamente", "success");
       } catch (error) {
         console.error("Error al borrar orden:", error);
-        showAlert("error", "No se pudo eliminar la orden. Revisa los permisos del admin.", "warning");
+        showAlert("Error!", "No se pudo eliminar la orden. Revisa los permisos del admin.", "warning");
       } finally {
         setLoading(false);
       }
@@ -115,10 +115,10 @@ const AdminDashboard = () => {
       );
       setOrders(orders.map(o => o._id === orderId ? { ...o, shippingStatus: newStatus } : o));
       if (newStatus === 'Despachado') {
-        showAlert("¡Pedido despachado! Mail enviado.", "success");
+        showAlert("¡Pedido despachado!", "Mail enviado", "success");
       }
     } catch (error) {
-      showAlert("Error al actualizar envío.", "error");
+      showAlert("Error!", "Parece que hubo un problema", "error");
     } finally {
       setLoading(false);
     }

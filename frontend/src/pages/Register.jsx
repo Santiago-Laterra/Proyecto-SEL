@@ -35,7 +35,6 @@ const Register = () => {
 
       navigate('/login');
     } catch (err) {
-      console.error("Error capturado:", err.response?.data);
       showAlert("Error", err.response?.data?.message || "No se pudo crear la cuenta", "error", "error");
     } finally {
       setLoading(false);
