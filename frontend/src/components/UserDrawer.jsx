@@ -54,15 +54,6 @@ const UserDrawer = ({ isOpen, onClose, user }) => {
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Favoritos</h3>
-
-              {/* BOTÓN MOBILE (Rosita) */}
-              <button
-                onClick={handleLogout}
-                className="flex md:hidden items-center gap-1.5 text-[9px] font-bold text-rose-400 bg-rose-50 px-3 py-1.5 rounded-full hover:bg-rose-100 transition-all uppercase"
-              >
-                <LogOut size={10} strokeWidth={3} />
-                Salir
-              </button>
             </div>
 
             {wishlist.length > 0 ? (
