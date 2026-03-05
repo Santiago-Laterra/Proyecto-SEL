@@ -63,7 +63,7 @@ const CheckoutModal = () => {
       const userData = JSON.parse(userRaw);
 
       const response = await api.post('/payments/create-preference', {
-        items: cart.map(item => ({ id: item._id, title: item.name, unit_price: Number(item.price), quantity: 1 })),
+        items: cart.map(item => ({ id: item._id, title: item.name, unit_price: Number(item.price), quantity: Number(item.quantity || 1) })),
         shippingCost: Number(shippingCost),
         userId: userData.id || userData._id,
         phoneNumber: address.phoneNumber,
