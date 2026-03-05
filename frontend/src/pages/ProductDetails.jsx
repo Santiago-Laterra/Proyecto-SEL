@@ -160,7 +160,7 @@ const ProductDetails = () => {
               <button
                 onClick={handleCalculateShipping}
                 disabled={calculating}
-                className="bg-slate-800 text-white px-4 py-2.5 rounded-lg text-sm font-bold hover:bg-slate-700 transition-colors disabled:opacity-50"
+                className="bg-[#007f5f] text-white px-4 py-2.5 rounded-lg text-sm font-bold hover:bg-slate-700 transition-colors disabled:opacity-50"
               >
                 {calculating ? "..." : "Calcular"}
               </button>
