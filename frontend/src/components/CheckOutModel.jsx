@@ -2,7 +2,7 @@ import { X, Building2, Home, Edit3, CreditCard } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useState, useEffect } from 'react';
 import api from '../services/api';
-
+import { showAlert } from '../utils/alerts';
 
 const CheckoutModal = () => {
   const { isCheckoutOpen, closeCheckout, cart, shippingCost, zipCod, calculateShippingAction, cartTotal } = useCart();
@@ -57,7 +57,9 @@ const CheckoutModal = () => {
     setLoading(true);
     try {
       const userRaw = localStorage.getItem('user');
-      if (!userRaw) return alert("Inicia sesión para continuar");
+      if (!userRaw) {
+        return showAlert("¡Inicia Sesión!", "Necesitas estar logueado para finalizar la compra.", "warning");
+      }
       const userData = JSON.parse(userRaw);
 
       const response = await api.post('/payments/create-preference', {
@@ -69,7 +71,7 @@ const CheckoutModal = () => {
       });
       if (response.data.init_point) window.location.href = response.data.init_point;
     } catch (error) {
-      alert("Error al procesar el pago");
+      showAlert("Error de Pago", "No pudimos conectar con Mercado Pago. Reintenta en unos instantes.", "error");
     } finally {
       setLoading(false);
     }

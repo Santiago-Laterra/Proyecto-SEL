@@ -66,14 +66,14 @@ const ProductDetails = () => {
   }, []);
 
   const handleCalculateShipping = () => {
-    if (zipCode.length < 4) return alert("Por favor, ingresá un código postal válido");
+    if (zipCode.length < 4) return showAlert("Por favor, ingresá un código postal válido", "warning");
 
     setCalculating(true);
 
     const nombreLocalidad = CP_A_LOCALIDAD[zipCode];
 
     if (!nombreLocalidad) {
-      alert("No realizamos envíos a esta zona o el CP es incorrecto.");
+      showAlert("No realizamos envíos a esta zona o el CP es incorrecto.", "error");
       setCalculating(false);
       return;
     }

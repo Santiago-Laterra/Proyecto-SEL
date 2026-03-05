@@ -31,11 +31,11 @@ const Register = () => {
 
       const response = await api.post('/auth/register', userData);
 
-      alert("¡Cuenta creada con éxito! Bienvenida a SeloYah.");
+      ashowAlertlert("¡Cuenta creada con éxito! Bienvenida a SeloYah.", "Toast");
       navigate('/login');
     } catch (err) {
       console.error("Error capturado:", err.response?.data);
-      alert(err.response?.data?.message || "Error al registrarse");
+      showAlert(err.response?.data?.message || "Error al registrarse", "error");
     } finally {
       setLoading(false);
     }

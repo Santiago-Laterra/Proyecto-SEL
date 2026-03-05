@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import emailjs from '@emailjs/browser';
+import { showAlert } from '../utils/alerts';
+
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -27,12 +29,12 @@ const Contact = () => {
     emailjs.send(serviceID, templateID, templateParams, publicKey)
       .then((result) => {
         console.log('EXITO:', result.text);
-        alert("¡Mensaje enviado con éxito!");
+        showAlert("¡Mensaje enviado con éxito!", "Toast");
         setFormData({ nombre: '', apellidos: '', email: '', mensaje: '' });
       })
       .catch((err) => {
         console.error('ERROR DETALLADO:', err);
-        alert("No se pudo enviar el mensaje. Error: " + err.text);
+        showAlert("No se pudo enviar el mensaje. Error: " + err.text, "error");
       });
   };
 

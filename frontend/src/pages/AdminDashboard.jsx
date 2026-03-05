@@ -3,6 +3,7 @@ import api from '../services/api';
 import { Pencil, Trash2, Plus, FileSpreadsheet, X, Package, ShoppingBag, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
+import { showAlert } from '../utils/alerts';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('products');
@@ -52,7 +53,9 @@ const AdminDashboard = () => {
   });
 
   const exportOrdersToExcel = () => {
-    if (filteredOrders.length === 0) return alert("No hay órdenes para exportar");
+    if (filteredOrders.length === 0) {
+      showAlert("No hay órdenes para exportar", "warning");
+    }
     const dataToExport = filteredOrders.map(order => ({
       ID_Pedido: order._id,
       Fecha: new Date(order.createdAt).toLocaleDateString(),
@@ -92,10 +95,10 @@ const AdminDashboard = () => {
 
         // Actualizamos la lista local eliminando la orden borrada
         setOrders(orders.filter(order => order._id !== id));
-        alert("Orden eliminada correctamente");
+        showAlert("Orden eliminada correctamente", "Toast");
       } catch (error) {
         console.error("Error al borrar orden:", error);
-        alert("No se pudo eliminar la orden. Revisa los permisos del admin.");
+        showAlert("No se pudo eliminar la orden. Revisa los permisos del admin.", "warning");
       } finally {
         setLoading(false);
       }
@@ -112,10 +115,10 @@ const AdminDashboard = () => {
       );
       setOrders(orders.map(o => o._id === orderId ? { ...o, shippingStatus: newStatus } : o));
       if (newStatus === 'Despachado') {
-        alert("¡Pedido despachado! Mail enviado.");
+        showAlert("¡Pedido despachado! Mail enviado.", "Toast");
       }
     } catch (error) {
-      alert("Error al actualizar envío.");
+      showAlert("Error al actualizar envío.", "error");
     } finally {
       setLoading(false);
     }
@@ -140,9 +143,9 @@ const AdminDashboard = () => {
 
       setEditingProduct(null);
       fetchProducts();
-      alert("¡Actualizado!");
+      showAlert("¡Actualizado!", "Toast");
     } catch (error) {
-      alert("Error al actualizar");
+      showAlert("Error al actualizar", "error");
     } finally {
       setLoading(false);
     }
@@ -154,7 +157,7 @@ const AdminDashboard = () => {
         const token = localStorage.getItem('token');
         await api.delete(`/products/${id}`, { headers: { 'Authorization': `Bearer ${token}` } });
         fetchProducts();
-      } catch (error) { alert("Error"); }
+      } catch (error) { showAlert("Error", "error"); }
     }
   };
 

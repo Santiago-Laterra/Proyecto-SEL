@@ -45,12 +45,12 @@ const Dashboard = () => {
           await api.post('/products/import', jsonData, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
-          alert("¡Importación masiva exitosa! 🚀");
+          showAlert("¡Importación masiva exitosa! 🚀", "Toast");
           navigate('/admin');
         }
       } catch (error) {
         console.error("Error al importar:", error);
-        alert("Error al procesar el archivo. Verificá el formato.");
+        showAlert("Error al procesar el archivo. Verificá el formato.", "error");
       } finally {
         setLoading(false);
         e.target.value = ""; // Reset del input file
@@ -78,7 +78,7 @@ const Dashboard = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (files.length === 0) return alert("Por favor, selecciona al menos una imagen.");
+    if (files.length === 0) return showAlert("Por favor, selecciona al menos una imagen.", "warning");
 
     setLoading(true);
     const data = new FormData();
@@ -95,13 +95,13 @@ const Dashboard = () => {
 
     try {
       await api.post('/products/add', data);
-      alert("¡Producto cargado con éxito!");
+      showAlert("¡Producto cargado con éxito!", "Toast");
       setFormData({ name: '', description: '', price: '', stock: '0', category: '' });
       setFiles([]);
       setPreviews([]);
       navigate('/admin');
     } catch (error) {
-      alert(error.response?.data?.message || "Error al comunicarse con el servidor.");
+      showAlert(error.response?.data?.message || "Error al comunicarse con el servidor.", "error");
     } finally {
       setLoading(false);
     }
