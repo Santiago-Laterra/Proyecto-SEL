@@ -6,14 +6,12 @@ import { showAlert } from "../utils/alerts";
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
 
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(''); // Limpiamos errores previos
 
     try {
       await login(email, password);
@@ -40,13 +38,6 @@ const Login = () => {
         <p className="text-center text-gray-500 mb-8 font-light text-sm">
           Introduce tus credenciales para acceder a Soleyah
         </p>
-
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-2 rounded mb-4 text-center text-sm">
-            {error}
-          </div>
-        )}
-
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-gray-700 mb-1 text-sm font-medium">Email</label>
