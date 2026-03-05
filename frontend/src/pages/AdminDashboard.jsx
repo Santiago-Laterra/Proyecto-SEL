@@ -195,7 +195,7 @@ const AdminDashboard = () => {
             </div>
             <div className="flex gap-3 w-full md:w-auto">
               {activeTab === 'products' ? (
-                <button onClick={() => navigate('/dashboard')} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-slate-800 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-700">
+                <button onClick={() => navigate('/dashboard')} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#007f5f] text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-[#00664d]">
                   <Plus size={18} /> Nuevo Producto
                 </button>
               ) : (
