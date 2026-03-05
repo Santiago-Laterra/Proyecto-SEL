@@ -24,6 +24,47 @@ const Dashboard = () => {
 
   if (!isAdmin) return <div className="text-center py-20">No tienes acceso a esta sección.</div>;
 
+  // --- LÓGICA DE EXCEL (EXPORTAR) ---
+  const handleExportExcel = async () => {
+    try {
+      setLoading(true);
+      // 1. Traemos los productos actualizados de la DB
+      const res = await api.get('/products');
+      const productos = res.data;
+
+      if (!productos || productos.length === 0) {
+        return showAlert("Sin datos", "No hay productos para exportar", "info");
+      }
+
+      // 2. Mapeamos los datos para que el Excel tenga títulos bonitos
+      const datosParaExcel = productos.map(p => ({
+        "ID": p._id,
+        "Nombre": p.name,
+        "Descripción": p.description,
+        "Precio ($)": p.price,
+        "Stock": p.stock,
+        "Categoría": p.category || 'Sin categoría',
+        "Imágenes (Links)": Array.isArray(p.image) ? p.image.join(', ') : p.image
+      }));
+
+      // 3. Creamos el libro de Excel
+      const worksheet = XLSX.utils.json_to_sheet(datosParaExcel);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Inventario SeloYah");
+
+      // 4. Descargamos el archivo
+      const fecha = new Date().toLocaleDateString().replace(/\//g, '-');
+      XLSX.writeFile(workbook, `Inventario_SeloYah_${fecha}.xlsx`);
+
+      showAlert("¡Éxito!", "Base de datos exportada correctamente", "success");
+    } catch (error) {
+      console.error("Error al exportar:", error);
+      showAlert("Error", "No se pudo generar el archivo Excel", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // --- LÓGICA DE EXCEL (IMPORTAR) ---
   const handleImportExcel = (e) => {
     const file = e.target.files[0];
@@ -192,7 +233,7 @@ const Dashboard = () => {
 
           <div className="pt-4 border-t border-emerald-200">
             <p className="text-xs text-emerald-600 mb-2 font-medium">Respaldo local del inventario.</p>
-            <button onClick={() => {/* handleExportExcel */ }} className="w-full bg-white text-emerald-700 border border-emerald-200 px-4 py-3 rounded-xl font-bold hover:bg-emerald-50 transition flex items-center justify-center gap-2">
+            <button onClick={() => { handleExportExcel }} className="w-full bg-white text-emerald-700 border border-emerald-200 px-4 py-3 rounded-xl font-bold hover:bg-emerald-50 transition flex items-center justify-center gap-2">
               Descargar Excel
             </button>
           </div>
