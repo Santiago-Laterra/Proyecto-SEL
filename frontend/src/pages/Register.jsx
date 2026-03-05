@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { showAlert } from "../utils/alerts";
+import { showAlert } from "../utils/alerts"; // Importación corregida con llaves
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -28,10 +28,9 @@ const Register = () => {
         password: formData.password
       };
 
-
-
       const response = await api.post('/auth/register', userData);
 
+      // CORRECCIÓN AQUÍ: Solo una llamada, nombre correcto y 3 parámetros.
       showAlert("¡Cuenta creada!", "Bienvenida a SeloYah. Ya puedes iniciar sesión.", "success");
 
       navigate('/login');
@@ -44,9 +43,8 @@ const Register = () => {
   };
 
   return (
-    /* Cambiado min-h-[80vh] por min-h-screen y añadido pb-20 para que no se corte al final */
     <div className="min-h-screen bg-white flex flex-col items-center pt-24 pb-20 px-4">
-      <div className="w-full max-w-md"> {/* max-w-125 no es estándar en Tailwind, usamos max-w-md que es similar */}
+      <div className="w-full max-w-md">
         <h1 className="text-[32px] font-normal text-[#111] text-center mb-4">Crear cuenta de cliente</h1>
         <p className="text-gray-500 text-[15px] text-center mb-10 leading-relaxed">
           Cree una cuenta de cliente para guardar todos sus pedidos en un solo lugar
