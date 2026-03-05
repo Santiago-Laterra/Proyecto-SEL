@@ -233,7 +233,8 @@ const Dashboard = () => {
 
           <div className="pt-4 border-t border-emerald-200">
             <p className="text-xs text-emerald-600 mb-2 font-medium">Respaldo local del inventario.</p>
-            <button onClick={() => { handleExportExcel }} className="w-full bg-white text-emerald-700 border border-emerald-200 px-4 py-3 rounded-xl font-bold hover:bg-emerald-50 transition flex items-center justify-center gap-2">
+            <button onClick={handleExportExcel}
+              className="w-full bg-white text-emerald-700 border border-emerald-200 px-4 py-3 rounded-xl font-bold hover:bg-emerald-50 transition flex items-center justify-center gap-2">
               Descargar Excel
             </button>
           </div>
