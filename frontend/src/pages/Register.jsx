@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import showAlert from "../utils/alerts"
+import { showAlert } from "../utils/alerts";
+
 const Register = () => {
   const [formData, setFormData] = useState({
     firstName: '',
@@ -31,11 +32,12 @@ const Register = () => {
 
       const response = await api.post('/auth/register', userData);
 
-      ashowAlertlert("¡Cuenta creada con éxito! Bienvenida a SeloYah.", "success");
+      showAlert("¡Cuenta creada!", "Bienvenida a SeloYah. Ya puedes iniciar sesión.", "success");
+
       navigate('/login');
     } catch (err) {
       console.error("Error capturado:", err.response?.data);
-      showAlert("Error al registrarse", "error al registrarse", "error");
+      showAlert("Error", err.response?.data?.message || "No se pudo crear la cuenta", "error");
     } finally {
       setLoading(false);
     }
