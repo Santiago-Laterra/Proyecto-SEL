@@ -51,20 +51,22 @@ const Login = () => {
             />
           </div>
 
-
           <div>
-            <div className="flex justify-between mb-1">
-              <label className="text-gray-700 text-sm font-medium">Contraseña</label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all"
-                required
-              />
-              {/* LINK AQUÍ: Justo arriba del input de password, a la derecha (estilo moderno) */}
-              <Link to="/forgot-password" size="sm" className="text-xs text-emerald-700 hover:text-emerald-800 hover:underline">
+            <label className="block text-gray-700 mb-1 text-sm font-medium">Contraseña</label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all"
+              required
+            />
+            {/* El enlace ahora está después del input */}
+            <div className="flex justify-end mt-1.5">
+              <Link
+                to="/forgot-password"
+                className="text-xs text-emerald-700 hover:text-emerald-800 hover:underline transition-colors"
+              >
                 ¿Olvidaste tu contraseña?
               </Link>
             </div>
