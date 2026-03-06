@@ -17,19 +17,18 @@ const Login = () => {
       await login(email, password);
       navigate('/');
     } catch (err) {
-      // 1. Extraemos el mensaje real del backend si existe
-      const mensajeError = err.response?.data?.message || "Correo o contraseña incorrectos";
+      // Buscamos el mensaje en diferentes lugares por si el error viene distinto
+      const mensajeError = err.response?.data?.message || err.message || "Credenciales incorrectas";
 
-      // 3. Disparamos el Alert visual (Asegúrate de que showAlert esté bien importado)
-      showAlert(
-        "Error de acceso",
-        mensajeError,
-        "error"
-      );
+      if (typeof showAlert === 'function') {
+        showAlert("Error de acceso", mensajeError, "error");
+      } else {
+        alert(mensajeError);
+      }
     }
-  };
-
+  }
   return (
+
     <div className="flex flex-col items-center justify-center min-h-screen bg-white p-4">
       <div className="w-full max-w-md">
         <h1 className="text-4xl font-semibold text-center text-gray-800 mb-2 font-serif">
@@ -61,7 +60,7 @@ const Login = () => {
               className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all"
               required
             />
-            {/* El enlace ahora está después del input */}
+
             <div className="flex justify-end mt-1.5">
               <Link
                 to="/forgot-password"
