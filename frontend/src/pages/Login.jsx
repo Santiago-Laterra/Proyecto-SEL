@@ -51,6 +51,14 @@ const Login = () => {
             />
           </div>
 
+          <input
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all"
+            required
+          />
           <div>
             <div className="flex justify-between mb-1">
               <label className="text-gray-700 text-sm font-medium">Contraseña</label>
@@ -59,14 +67,6 @@ const Login = () => {
                 ¿Olvidaste tu contraseña?
               </Link>
             </div>
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all"
-              required
-            />
           </div>
 
           <button
